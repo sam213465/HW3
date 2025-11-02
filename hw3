@@ -8,17 +8,20 @@ struct Node {
   int c;
   Node * next;
 };
-//test edit
+
 class Stack {
  private:
   Node *node;
 public;
 
 }
+
 class Maze {
  private:
 
 }
+
+
 int main() {
   while (1) {
     cout << "*** (^_^) Data Structure (^o^) ***" << endl;
