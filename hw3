@@ -8,7 +8,7 @@ struct Node {
   int c;
   Node * next;
 };
-
+//test edit
 class Stack {
  private:
   Node *node;
