@@ -1,0 +1,33 @@
+#include <iostream>
+#include <fstream>
+#include <string>
+using namespace std;
+
+struct Node {
+  int r;
+  int c;
+  Node * next;
+};
+
+class Stack {
+ private:
+  Node *node;
+public;
+
+}
+class Maze {
+ private:
+
+}
+int main() {
+  while (1) {
+    cout << "*** (^_^) Data Structure (^o^) ***" << endl;
+    cout << "*** Find the Goal(s) in a Maze ***" << endl;
+    cout << "* 0. Quit                        *" << endl;
+    cout << "* 1. Find one goal               *" << endl;
+    cout << "* 2. Find goal(s) as requested   *" << endl;
+    cout << "* 3. How many goals?             *" << endl;
+    cout << "* 4. Shortest path to one goal   *" << endl;
+    cout << "**********************************" << endl;
+    string command;
+    cout << "Input a command(0, 1, 2, 3, 4): ";
