@@ -9,20 +9,41 @@ struct Node {
   Node * next;
 };
 
-class Stack {
- private:
-  Node *node;
-public;
-
-}
-
 class Maze {
  private:
+  int column;
+  int row;
+public;
+  Maze() {
+    ifstream fin(filename);
+    fin >> column >> row;
+}
 
+class Stack {
+ private:
+  Node * top;
+ public:
+  Stack() {
+    top = NULL
+  }
+  ~Stack() {
+    while (top) {
+      Node *temp = top;
+      top = top->next;
+      delete temp;
+    }
+  }
+  void push(int x, int y) {
+    Node *newnode = new Node;
+    newnode->x = x;
+    newnode->y = y;
+    newnode->next = top;
+    top = newnode;
 }
 
 
 int main() {
+  Maze maze;
   while (1) {
     cout << "*** (^_^) Data Structure (^o^) ***" << endl;
     cout << "*** Find the Goal(s) in a Maze ***" << endl;
@@ -34,3 +55,29 @@ int main() {
     cout << "**********************************" << endl;
     string command;
     cout << "Input a command(0, 1, 2, 3, 4): ";
+    
+    if (command == "1") {
+      int filenumber;
+      cout << "Input a file number: ";
+      cin >> filenumber;
+      maze(filenumber);
+    } else if (command == "2") {
+      int goals;
+      cout << "Number of G (goals):"
+      cin >> goals;
+    } else if (command == "3") {
+
+
+
+    } else if (command == "4") {
+      int filenumber;
+      cout << "Input a file number: ";
+      cin >> filenumber;
+      maze(filenumber);
+    } else if {command == "0") {
+      break;
+    }
+  }
+
+  return 0;
+}
