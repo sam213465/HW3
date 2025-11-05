@@ -27,18 +27,34 @@ class Stack {
     top = NULL
   }
   ~Stack() {
-    while (top) {
-      Node *temp = top;
-      top = top->next;
-      delete temp;
+    while (!Isempty()) {
+      pop();
     }
   }
+
+  bool Isempty() {
+    if (top == NULL) {
+      return true;
+    }
+    return false;
+  }
+
   void push(int x, int y) {
     Node *newnode = new Node;
     newnode->x = x;
     newnode->y = y;
     newnode->next = top;
     top = newnode;
+  }
+
+  void pop() {
+    if (!Isempty()) {
+      Node *temp = top;
+      top = top->next;
+      temp->next = NULL;
+      delete temp;
+    }
+  }
 }
 
 
