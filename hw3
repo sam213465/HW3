@@ -13,18 +13,61 @@ class Maze {
  private:
   int column;
   int row;
-public;
-  Maze() {
+  char **grid;
+ public:
+  Maze(string filename) {
     ifstream fin(filename);
     fin >> column >> row;
-}
+
+    grid = new char*[row];
+    for (int i = 0; i < row; i++) {
+      grid[i] = new char[column];
+    }
+    for (int i = 0; i < row; i++) {
+      for (int j = 0; j < column; j++) {
+        fin >> grid[i][j];
+      }
+    }
+    fin.close();
+  }
+
+  ~Maze() {
+    for (int i = 0; i < row; i++) {
+      delete [] grid[i];
+    }
+    delete [] grid;
+  }
+  
+  char Getgrid(int x, int y) {  
+  	return grid[x][y];
+  }
+  void Setgrid(int x, int y, char val) { 
+    grid[x][y] = val; 
+  }
+
+  bool Isobstacle(int x, int y) {  // 遇到障礙
+  	if (grid[x][y] == 'O') {
+  	  return true;
+	  }
+	  return false;
+  }
+
+  void Print(int row, int column) {   // 印出結果
+  	for (int i = 0; i < row; i++) {
+  	  for (int j = 0; j < column; j++) {
+  	  	cout << grid[i][j];
+      }
+	  cout << endl;
+	  }
+  }
+};
 
 class Stack {
  private:
   Node * top;
  public:
   Stack() {
-    top = NULL
+    top = NULL;
   }
   ~Stack() {
     while (!Isempty()) {
@@ -39,10 +82,10 @@ class Stack {
     return false;
   }
 
-  void push(int x, int y) {
+  void push(int r, int c) {
     Node *newnode = new Node;
-    newnode->x = x;
-    newnode->y = y;
+    newnode->r = r;
+    newnode->c = c;
     newnode->next = top;
     top = newnode;
   }
@@ -55,11 +98,11 @@ class Stack {
       delete temp;
     }
   }
-}
+};
 
 
 int main() {
-  Maze maze;
+  
   while (1) {
     cout << "*** (^_^) Data Structure (^o^) ***" << endl;
     cout << "*** Find the Goal(s) in a Maze ***" << endl;
@@ -71,29 +114,31 @@ int main() {
     cout << "**********************************" << endl;
     string command;
     cout << "Input a command(0, 1, 2, 3, 4): ";
-    
+    cin >> command;
+
     if (command == "1") {
       int filenumber;
       cout << "Input a file number: ";
       cin >> filenumber;
-      maze(filenumber);
+      string filename = "input" + to_string(filenumber) + ".txt";
+      Maze maze(filename);
     } else if (command == "2") {
       int goals;
-      cout << "Number of G (goals):"
+      cout << "Number of G (goals):";
       cin >> goals;
     } else if (command == "3") {
-
-
+      cout << "not"; 
 
     } else if (command == "4") {
       int filenumber;
       cout << "Input a file number: ";
       cin >> filenumber;
       maze(filenumber);
-    } else if {command == "0") {
+    } else if (command == "0") {
       break;
     }
   }
-
   return 0;
 }
+  
+
