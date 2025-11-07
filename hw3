@@ -45,6 +45,13 @@ class Maze {
     grid[x][y] = val; 
   }
 
+  int Getrow() {
+  	return row;
+  }
+  int Getcolumn() {
+  	return column;
+  }
+
   bool Isobstacle(int x, int y) {  // 遇到障礙
   	if (grid[x][y] == 'O') {
   	  return true;
