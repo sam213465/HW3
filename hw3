@@ -52,7 +52,7 @@ class Maze {
   	return column;
   }
 
-  bool inBounds(int x, int y) {
+  bool Inbounds(int x, int y) {
     if (x >= 0 && x < row && y >= 0 && y < column) {
       return true;
 	}
@@ -138,7 +138,7 @@ void Mission1(Maze &maze) {
         y += dy[dir];
 
         path.push(x, y, dir);
-        if (!maze.inBounds(x, y) || maze.Getgrid(x, y) == 'O' || maze.Getgrid(x, y) == 'V') {
+        if (!maze.Inbounds(x, y) || maze.Getgrid(x, y) == 'O' || maze.Getgrid(x, y) == 'V') {
             path.pop(x, y, dir);  // 死路後退 
 
             if (path.Isempty()) break;
