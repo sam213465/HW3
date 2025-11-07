@@ -6,6 +6,7 @@ using namespace std;
 struct Node {
   int r;
   int c;
+  int dir;
   Node * next;
 };
 
@@ -38,13 +39,12 @@ class Maze {
     delete [] grid;
   }
   
-  char Getgrid(int x, int y) {  
+  char Getgrid(int x, int y) {
   	return grid[x][y];
   }
   void Setgrid(int x, int y, char val) { 
     grid[x][y] = val; 
   }
-
   int Getrow() {
   	return row;
   }
@@ -52,20 +52,29 @@ class Maze {
   	return column;
   }
 
-  bool Isobstacle(int x, int y) {  // 遇到障礙
-  	if (grid[x][y] == 'O') {
-  	  return true;
-	  }
-	  return false;
+  bool inBounds(int x, int y) {
+    if (x >= 0 && x < row && y >= 0 && y < column) {
+      return true;
+	}
+	return false;
   }
-
-  void Print(int row, int column) {   // 印出結果
+  void Print(int row, int column) {
   	for (int i = 0; i < row; i++) {
   	  for (int j = 0; j < column; j++) {
   	  	cout << grid[i][j];
       }
 	  cout << endl;
-	  }
+	}
+  }
+  
+  void Copy(int row, int column) {
+  	for (int i = 0; i < row; i++) {
+  	  for (int j = 0; j < column; j++) {
+  	  	if (grid[i][j] == 'V') {
+  	      grid[i][j] = 'R';
+		}
+      }
+	}
   }
 };
 
@@ -77,9 +86,11 @@ class Stack {
     top = NULL;
   }
   ~Stack() {
-    while (!Isempty()) {
-      pop();
-    }
+    while (top) {
+    Node *temp = top;
+    top = top->next;
+    delete temp;
+  }
   }
 
   bool Isempty() {
@@ -89,24 +100,75 @@ class Stack {
     return false;
   }
 
-  void push(int r, int c) {
+  void push(int r, int c, int d) {
     Node *newnode = new Node;
     newnode->r = r;
     newnode->c = c;
+    newnode->dir = d;
     newnode->next = top;
     top = newnode;
   }
 
-  void pop() {
-    if (!Isempty()) {
-      Node *temp = top;
-      top = top->next;
-      temp->next = NULL;
-      delete temp;
+    bool pop(int &x, int &y, int &dir) {
+        if (!top) return false;
+        x = top->r;
+        y = top->c;
+        dir = top->dir;
+        Node *temp = top;
+        top = top->next;
+        delete temp;
+        return true;
     }
-  }
-};
+  
 
+};
+int dx[4] = {0, 1, 0, -1};  // 右 下 左 上
+int dy[4] = {1, 0, -1, 0};
+
+void Mission1(Maze &maze) {
+    Stack path;
+    int x = 0, y = 0, dir = 0;
+
+    path.push(x, y, dir);
+    maze.Setgrid(x, y, 'V'); 
+
+    while (!path.Isempty()) {
+
+        x += dx[dir];
+        y += dy[dir];
+
+        path.push(x, y, dir);
+        if (!maze.inBounds(x, y) || maze.Getgrid(x, y) == 'O' || maze.Getgrid(x, y) == 'V') {
+            path.pop(x, y, dir);  // 死路後退 
+
+            if (path.Isempty()) break;
+            
+            int tmpx, tmpy;
+            path.pop(tmpx, tmpy, dir);  // 回到上一步 
+            x = tmpx;
+            y = tmpy;
+            
+            dir = (dir + 1) % 4;
+            path.push(x, y, dir);
+            continue;
+        }
+
+        if (maze.Getgrid(x, y) != 'G') {
+          maze.Setgrid(x, y, 'V');
+        }
+
+        if (maze.Getgrid(x, y) == 'G') {
+            path.push(x, y, dir);
+            break;
+        }
+        
+    }
+    
+    maze.Print(maze.Getrow(), maze.Getcolumn());
+    maze.Copy(maze.Getrow(), maze.Getcolumn());
+    cout << endl; 
+    maze.Print(maze.Getrow(), maze.Getcolumn());
+}
 
 int main() {
   
@@ -122,13 +184,13 @@ int main() {
     string command;
     cout << "Input a command(0, 1, 2, 3, 4): ";
     cin >> command;
-
     if (command == "1") {
       int filenumber;
       cout << "Input a file number: ";
       cin >> filenumber;
       string filename = "input" + to_string(filenumber) + ".txt";
       Maze maze(filename);
+      Mission1(maze);
     } else if (command == "2") {
       int goals;
       cout << "Number of G (goals):";
@@ -140,7 +202,7 @@ int main() {
       int filenumber;
       cout << "Input a file number: ";
       cin >> filenumber;
-      maze(filenumber);
+     // maze(filenumber);
     } else if (command == "0") {
       break;
     }
