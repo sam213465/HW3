@@ -128,59 +128,146 @@ int dx[4] = {0, 1, 0, -1};  // 右 下 左 上
 int dy[4] = {1, 0, -1, 0};
 
 void Mission1(Maze &maze) {
-    Stack path;
-    int x = 0, y = 0;
-    int dir = 0;  
+  Stack path;
+  int x = 0, y = 0;
+  int dir = 0;  
 
-    path.push(x, y, dir);
-    maze.Setgrid(x, y, 'V');
+  path.push(x, y, dir);
+  maze.Setgrid(x, y, 'V');
 
-    int curx, cury, curdir;
+  int curx, cury, curdir;
 
-    while (!path.Isempty()) {
-        path.pop(curx, cury, curdir);
+  while (!path.Isempty()) {
+    path.pop(curx, cury, curdir);  // 取出目前位置
 
-       
-        bool moved = false;
-        for (int i = 0; i < 4; i++) {
-            int nextdir = (curdir + i) % 4;  
-            int nextx = curx + dx[nextdir];
-            int nexty = cury + dy[nextdir];
+    bool moved = false;
+    for (int i = 0; i < 4; i++) {
+      int nextdir = (curdir + i) % 4; 
+      int nextx = curx + dx[nextdir];
+      int nexty = cury + dy[nextdir];
 
-            if (!maze.Inbounds(nextx, nexty)) continue;
-            if (maze.Getgrid(nextx, nexty) == 'O' || maze.Getgrid(nextx, nexty) == 'V') continue;
+      if (!maze.Inbounds(nextx, nexty)) continue; // 超過邊界
+      if (maze.Getgrid(nextx, nexty) == 'O' || maze.Getgrid(nextx, nexty) == 'V') continue;  // 遇到障礙或已走過
 
-       
-            path.push(curx, cury, (nextdir + 1) % 4);  
-            path.push(nextx, nexty, nextdir);
+      path.push(curx, cury, (nextdir + 1) % 4);  // 回溯時要從下個方向開始
+      path.push(nextx, nexty, nextdir);  // 把下一步放進堆疊
 
-            if (maze.Getgrid(curx, cury) == 'G') {
-              break;
-			      }
-
-            if (maze.Getgrid(nextx, nexty) != 'G') {
-              maze.Setgrid(nextx, nexty, 'V');
+      if (maze.Getgrid(curx, cury) == 'G') {  // 遇到目標
+        break;
 			}
 
-            moved = true;
-            break;
-        }
-
-     
-        if (maze.Getgrid(curx, cury) == 'G') {
-            maze.Print(maze.Getrow(), maze.Getcolumn()); 
-            maze.Copy(maze.Getrow(), maze.Getcolumn());  
-            cout << endl;
-            maze.Print(maze.Getrow(), maze.Getcolumn()); 
-            return;
-        }
-
-        
-        if (!moved) continue;
+      if (maze.Getgrid(nextx, nexty) != 'G') {
+        maze.Setgrid(nextx, nexty, 'V');  // 標記已走過
+		  }
+      moved = true;
+      break;
+    }
+      
+    if (maze.Getgrid(curx, cury) == 'G') {
+      maze.Print(maze.Getrow(), maze.Getcolumn()); 
+      maze.Copy(maze.Getrow(), maze.Getcolumn());
+      cout << endl;
+      maze.Print(maze.Getrow(), maze.Getcolumn());
+      return;
     }
 
-    
-    maze.Print(maze.Getrow(), maze.Getcolumn());
+    if (!moved) continue;  // 若四個方向都不通，就回到上一次的節點
+  }
+  maze.Print(maze.Getrow(), maze.Getcolumn());
+}
+
+void Mission3(Maze &maze) {
+  Stack path;
+  int x = 0, y = 0, dir = 0;
+  int goals = 0;
+  vector<pair<int, int>> goal;  // 記錄走過的目標
+  path.push(x, y, dir);
+  maze.Setgrid(x, y, 'V');
+
+  int curx, cury, curdir;
+
+  while (!path.Isempty()) {
+    path.pop(curx, cury, curdir);
+    bool moved = false;
+    for (; curdir < 4; curdir++) {
+      int nextx = curx + dx[curdir];
+      int nexty = cury + dy[curdir];
+
+      if (!maze.Inbounds(nextx, nexty)) continue;  // 超過邊界
+      if (maze.Getgrid(nextx, nexty) == 'O' || maze.Getgrid(nextx, nexty) == 'V') continue;  // 遇到障礙或已走過
+
+            
+      path.push(curx, cury, curdir + 1);  //如果下一格走不通，回來時要嘗試下一個方向
+      path.push(nextx, nexty, 0);  // 把下一步放進堆疊
+
+      if (maze.Getgrid(nextx, nexty) != 'G') {
+        maze.Setgrid(nextx, nexty, 'V');  // 標記已走過
+      } else {
+        bool same = false;
+        if (goals == 0) {
+          goal.push_back({nextx, nexty});
+          goals++;
+        } else if (goals >= 1) {
+          for (int i = 0; i < goals; i++) {
+            if (goal[i].first == nextx && goal[i].second == nexty) {
+              same = true;
+              continue;
+					  }
+				  }
+				  if (!same) {  // 目標位置不一樣
+				    goal.push_back({nextx, nexty});
+				    goals++;
+				  }
+				}
+      }
+      moved = true;
+      break;
+    }
+    if (!moved) continue;  //若四個方向都不通，就回到上一次的節點
+  }
+  maze.Print(maze.Getrow(), maze.Getcolumn()); 
+  cout << endl;
+  cout << "The maze has " << goals << " goal(s) in total." << endl; 
+}
+struct Node_mission4 {
+  int x, y;
+  int distance;
+};
+
+void Mission4(Maze &maze) {
+  vector<vector<bool>> visited(maze.Getrow(), vector<bool>(maze.Getcolumn(), false));
+  queue<Node_mission4> q;
+
+  q.push({0, 0, 0});
+  visited[0][0] = true;
+  maze.Setgrid(0, 0, 'V');
+
+  while (!q.empty()) {
+    Node_mission4 cur = q.front();  // 每次從佇列取出一個節點
+    q.pop();
+
+    if (maze.Getgrid(cur.x, cur.y) == 'G') {  // 找到最短路徑
+      maze.Print(maze.Getrow(), maze.Getcolumn());
+      cout << endl;
+      cout << "Shortest path length = " << cur.distance+1 << endl;
+      return;
+    }
+
+    for (int i = 0; i < 4; i++) {
+      int nextx = cur.x + dx[i];
+      int nexty = cur.y + dy[i];
+      if (!maze.Inbounds(nextx, nexty)) continue;
+      if (maze.Getgrid(nextx, nexty) == 'O' || visited[nextx][nexty]) continue;  // 遇到障礙或已走過
+
+      visited[nextx][nexty] = true;  // 標記已走過
+      if (maze.Getgrid(nextx, nexty) != 'G')
+      maze.Setgrid(nextx, nexty, 'V');
+      q.push({nextx, nexty, cur.distance + 1});  // 把下一格加入佇列，並讓距離加 1
+    }
+  }
+
+  // 沒有路徑
+  maze.Print(maze.Getrow(), maze.Getcolumn());
 }
 
 int main() {
