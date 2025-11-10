@@ -18,15 +18,19 @@ class Maze {
  public:
   Maze(string filename) {
     ifstream fin(filename);
-    fin >> column >> row;
+    if (!fin.is_open()) {
+      cout << endl << filename << " does not exist!" << endl << endl;
+    } else {
+      fin >> column >> row;
 
-    grid = new char*[row];
-    for (int i = 0; i < row; i++) {
-      grid[i] = new char[column];
-    }
-    for (int i = 0; i < row; i++) {
-      for (int j = 0; j < column; j++) {
-        fin >> grid[i][j];
+      grid = new char*[row];
+      for (int i = 0; i < row; i++) {
+        grid[i] = new char[column];
+      }
+      for (int i = 0; i < row; i++) {
+        for (int j = 0; j < column; j++) {
+          fin >> grid[i][j];
+        }
       }
     }
     fin.close();
@@ -90,7 +94,7 @@ class Stack {
     Node *temp = top;
     top = top->next;
     delete temp;
-  }
+    }
   }
 
   bool Isempty() {
@@ -109,65 +113,67 @@ class Stack {
     top = newnode;
   }
 
-    bool pop(int &x, int &y, int &dir) {
-        if (!top) return false;
-        x = top->r;
-        y = top->c;
-        dir = top->dir;
-        Node *temp = top;
-        top = top->next;
-        delete temp;
-        return true;
-    }
-  
-
+  bool pop(int &x, int &y, int &dir) {
+    if (!top) return false;
+    x = top->r;
+    y = top->c;
+    dir = top->dir;
+    Node *temp = top;
+    top = top->next;
+    delete temp;
+    return true;
+  }
 };
 int dx[4] = {0, 1, 0, -1};  // 右 下 左 上
 int dy[4] = {1, 0, -1, 0};
 
 void Mission1(Maze &maze) {
-    Stack path;
-    int x = 0, y = 0, dir = 0;
+  if (maze.Getcolumn() == 0 || maze.Getrow() == 0) {
+    return;
+  }
+  Stack path;
+  int x = 0, y = 0, dir = 0;
+
+  path.push(x, y, dir);
+  maze.Setgrid(x, y, 'V'); 
+
+  while (!path.Isempty()) {
+
+    x += dx[dir];
+    y += dy[dir];
 
     path.push(x, y, dir);
-    maze.Setgrid(x, y, 'V'); 
+    if (!maze.Inbounds(x, y) || maze.Getgrid(x, y) == 'O' || maze.Getgrid(x, y) == 'V') {
+      path.pop(x, y, dir);  // 死路後退 
 
-    while (!path.Isempty()) {
-
-        x += dx[dir];
-        y += dy[dir];
-
-        path.push(x, y, dir);
-        if (!maze.Inbounds(x, y) || maze.Getgrid(x, y) == 'O' || maze.Getgrid(x, y) == 'V') {
-            path.pop(x, y, dir);  // 死路後退 
-
-            if (path.Isempty()) break;
+      if (path.Isempty()) break;
             
-            int tmpx, tmpy;
-            path.pop(tmpx, tmpy, dir);  // 回到上一步 
-            x = tmpx;
-            y = tmpy;
+      int tmpx, tmpy;
+      path.pop(tmpx, tmpy, dir);  // 回到上一步 
+      x = tmpx;
+      y = tmpy;
             
-            dir = (dir + 1) % 4;
-            path.push(x, y, dir);
-            continue;
-        }
-
-        if (maze.Getgrid(x, y) != 'G') {
-          maze.Setgrid(x, y, 'V');
-        }
-
-        if (maze.Getgrid(x, y) == 'G') {
-            path.push(x, y, dir);
-            break;
-        }
-        
+      dir = (dir + 1) % 4;
+      path.push(x, y, dir);
+      continue;
     }
+
+    if (maze.Getgrid(x, y) != 'G') {
+      maze.Setgrid(x, y, 'V');
+    }
+
+    if (maze.Getgrid(x, y) == 'G') {
+      path.push(x, y, dir);
+      break;
+    }
+        
+  }
     
-    maze.Print(maze.Getrow(), maze.Getcolumn());
-    maze.Copy(maze.Getrow(), maze.Getcolumn());
-    cout << endl; 
-    maze.Print(maze.Getrow(), maze.Getcolumn());
+  maze.Print(maze.Getrow(), maze.Getcolumn());
+  maze.Copy(maze.Getrow(), maze.Getcolumn());
+  cout << endl; 
+  maze.Print(maze.Getrow(), maze.Getcolumn());
+  cout << endl << endl;
 }
 
 int main() {
@@ -210,4 +216,3 @@ int main() {
   return 0;
 }
   
-
