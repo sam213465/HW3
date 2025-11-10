@@ -296,7 +296,12 @@ int main() {
       string filename = "input" + to_string(filenumber) + ".txt";
       if (maze != nullptr) delete maze;
         maze = new Maze(filename);
-        Mission1(*maze);
+        if (maze->Isempty()) {
+          cout << filename << " does not exist!" << endl;
+          cout << endl;
+        } else {
+          Mission1(*maze);
+        }
     } else if (command == "2") {
       if (maze == nullptr) {
         cout << "### Execute command 1 to load a maze! ###" << endl;
