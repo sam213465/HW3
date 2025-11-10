@@ -128,56 +128,63 @@ int dx[4] = {0, 1, 0, -1};  // 右 下 左 上
 int dy[4] = {1, 0, -1, 0};
 
 void Mission1(Maze &maze) {
-  if (maze.Getcolumn() == 0 || maze.Getrow() == 0) {
-    return;
-  }
-  Stack path;
-  int x = 0, y = 0, dir = 0;
-
-  path.push(x, y, dir);
-  maze.Setgrid(x, y, 'V'); 
-
-  while (!path.Isempty()) {
-
-    x += dx[dir];
-    y += dy[dir];
+    Stack path;
+    int x = 0, y = 0;
+    int dir = 0;  
 
     path.push(x, y, dir);
-    if (!maze.Inbounds(x, y) || maze.Getgrid(x, y) == 'O' || maze.Getgrid(x, y) == 'V') {
-      path.pop(x, y, dir);  // 死路後退 
+    maze.Setgrid(x, y, 'V');
 
-      if (path.Isempty()) break;
-            
-      int tmpx, tmpy;
-      path.pop(tmpx, tmpy, dir);  // 回到上一步 
-      x = tmpx;
-      y = tmpy;
-            
-      dir = (dir + 1) % 4;
-      path.push(x, y, dir);
-      continue;
-    }
+    int curx, cury, curdir;
 
-    if (maze.Getgrid(x, y) != 'G') {
-      maze.Setgrid(x, y, 'V');
-    }
+    while (!path.Isempty()) {
+        path.pop(curx, cury, curdir);
 
-    if (maze.Getgrid(x, y) == 'G') {
-      path.push(x, y, dir);
-      break;
-    }
+       
+        bool moved = false;
+        for (int i = 0; i < 4; i++) {
+            int nextdir = (curdir + i) % 4;  
+            int nextx = curx + dx[nextdir];
+            int nexty = cury + dy[nextdir];
+
+            if (!maze.Inbounds(nextx, nexty)) continue;
+            if (maze.Getgrid(nextx, nexty) == 'O' || maze.Getgrid(nextx, nexty) == 'V') continue;
+
+       
+            path.push(curx, cury, (nextdir + 1) % 4);  
+            path.push(nextx, nexty, nextdir);
+
+            if (maze.Getgrid(curx, cury) == 'G') {
+              break;
+			      }
+
+            if (maze.Getgrid(nextx, nexty) != 'G') {
+              maze.Setgrid(nextx, nexty, 'V');
+			}
+
+            moved = true;
+            break;
+        }
+
+     
+        if (maze.Getgrid(curx, cury) == 'G') {
+            maze.Print(maze.Getrow(), maze.Getcolumn()); 
+            maze.Copy(maze.Getrow(), maze.Getcolumn());  
+            cout << endl;
+            maze.Print(maze.Getrow(), maze.Getcolumn()); 
+            return;
+        }
+
         
-  }
+        if (!moved) continue;
+    }
+
     
-  maze.Print(maze.Getrow(), maze.Getcolumn());
-  maze.Copy(maze.Getrow(), maze.Getcolumn());
-  cout << endl; 
-  maze.Print(maze.Getrow(), maze.Getcolumn());
-  cout << endl << endl;
+    maze.Print(maze.Getrow(), maze.Getcolumn());
 }
 
 int main() {
-  
+  Maze *maze = nullptr;
   while (1) {
     cout << "*** (^_^) Data Structure (^o^) ***" << endl;
     cout << "*** Find the Goal(s) in a Maze ***" << endl;
@@ -190,29 +197,51 @@ int main() {
     string command;
     cout << "Input a command(0, 1, 2, 3, 4): ";
     cin >> command;
+    cout << endl;
     if (command == "1") {
       int filenumber;
       cout << "Input a file number: ";
       cin >> filenumber;
       string filename = "input" + to_string(filenumber) + ".txt";
-      Maze maze(filename);
-      Mission1(maze);
+      if (maze != nullptr) delete maze;
+        maze = new Maze(filename);
+        Mission1(*maze);
     } else if (command == "2") {
-      int goals;
-      cout << "Number of G (goals):";
-      cin >> goals;
+      if (maze == nullptr) {
+        cout << "### Execute command 1 to load a maze! ###" << endl;
+        cout << endl;
+	  } else {
+        int goals;
+        cout << "Number of G (goals):";
+        cin >> goals;
+        Mission2(*maze, goals);
+      }
     } else if (command == "3") {
-      cout << "not"; 
-
+      if (maze == nullptr) {
+        cout << "### Execute command 1 to load a maze! ###" << endl;
+        cout << endl;
+	  } else {
+        Mission3(*maze);
+      }
     } else if (command == "4") {
-      int filenumber;
+      int number;
       cout << "Input a file number: ";
-      cin >> filenumber;
-     // maze(filenumber);
+      cin >> number;
+      string filename = "input" + to_string(number) + ".txt";
+      Maze * maze_mission4;
+      maze_mission4 = new Maze(filename);
+      if (maze_mission4 == nullptr) {
+        cout << filename << " does not exist!" << endl;
+        cout << endl;
+      } else {
+        Mission4(*maze_mission4);
+      }
     } else if (command == "0") {
       break;
+    } else {
+      cout << "Command does not exist!" << endl;
+      cout << endl;
     }
   }
   return 0;
 }
-  
