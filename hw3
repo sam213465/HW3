@@ -21,7 +21,7 @@ class Maze {
   Maze(string filename) {
     ifstream fin(filename);
     if (!fin.is_open()) {
-      std::cout << endl << filename << " does not exist!" << endl << endl;
+      cout << endl << filename << " does not exist!" << endl << endl;
     } else {
       fin >> column >> row;
 
@@ -351,6 +351,7 @@ void Mission4(Maze &maze) {
       int spy = cur.y;
       maze.Print(maze.Getrow(), maze.Getcolumn());
       cout << endl;
+      maze.Restore(maze.Getrow(), maze.Getcolumn());
       while (!(spx == 0 && spy == 0)) {
         maze.Setgrid(spx, spy, 'R');
         auto sp = shortpath[spx][spy];
@@ -387,6 +388,7 @@ void Mission4(Maze &maze) {
 
 int main() {
   Maze *maze = nullptr;
+  Maze *maze_mission4 = nullptr;
   while (1) {
     cout << "*** (^_^) Data Structure (^o^) ***" << endl;
     cout << "*** Find the Goal(s) in a Maze ***" << endl;
@@ -430,14 +432,9 @@ int main() {
       cout << "Input a file number: ";
       cin >> number;
       string filename = "input" + to_string(number) + ".txt";
-      Maze * maze_mission4;
+      if (maze_mission4 != nullptr) delete maze_mission4;
       maze_mission4 = new Maze(filename);
-      if (maze_mission4 == nullptr) {
-        cout << filename << " does not exist!" << endl;
-        cout << endl;
-      } else {
-        Mission4(*maze_mission4);
-      }
+      Mission4(*maze_mission4);
     } else if (command == "0") {
       break;
     } else {
