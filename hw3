@@ -96,6 +96,7 @@ class Maze {
   void Change(int x, int y) {
     grid[x][y] = 'G';
   }
+
 };
 
 class Stack {
@@ -334,6 +335,7 @@ struct Node_mission4 {
 
 void Mission4(Maze &maze) {
   vector<vector<bool>> visited(maze.Getrow(), vector<bool>(maze.Getcolumn(), false));
+  vector<vector<pair<int,int>>> shortpath(maze.Getrow(), vector<pair<int,int>>(maze.Getcolumn(), {-1, -1}));
   queue<Node_mission4> q;
 
   q.push({0, 0, 0});
@@ -345,9 +347,18 @@ void Mission4(Maze &maze) {
     q.pop();
 
     if (maze.Getgrid(cur.x, cur.y) == 'G') {  // 找到最短路徑
+      int spx = cur.x;
+      int spy = cur.y;
       maze.Print(maze.Getrow(), maze.Getcolumn());
       cout << endl;
-      maze.Copy(maze.Getrow(), maze.Getcolumn());
+      while (!(spx == 0 && spy == 0)) {
+        maze.Setgrid(spx, spy, 'R');
+        auto sp = shortpath[spx][spy];
+        spx = sp.first;
+        spy = sp.second;
+        maze.Setgrid(cur.x, cur.y, 'G');
+      }
+      maze.Setgrid(0, 0, 'R');
       maze.Print(maze.Getrow(), maze.Getcolumn());
       cout << "Shortest path length = " << cur.distance+1 << endl;
       return;
@@ -360,6 +371,7 @@ void Mission4(Maze &maze) {
       if (maze.Getgrid(nextx, nexty) == 'O' || visited[nextx][nexty]) continue;  // 遇到障礙或已走過
 
       visited[nextx][nexty] = true;  // 標記已走過
+      shortpath[nextx][nexty] = {cur.x, cur.y};
       if (maze.Getgrid(nextx, nexty) != 'G')
       maze.Setgrid(nextx, nexty, 'V');
       q.push({nextx, nexty, cur.distance + 1});  // 把下一格加入佇列，並讓距離加 1
