@@ -359,8 +359,11 @@ void Mission4(Maze &maze) {
         maze.Setgrid(cur.x, cur.y, 'G');
       }
       maze.Setgrid(0, 0, 'R');
+      cout << endl;
       maze.Print(maze.Getrow(), maze.Getcolumn());
+      cout << endl;
       cout << "Shortest path length = " << cur.distance+1 << endl;
+      cout << endl;
       return;
     }
 
