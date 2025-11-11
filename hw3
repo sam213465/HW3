@@ -2,9 +2,7 @@
 #include <fstream>
 #include <string>
 #include <vector>
-#include <algorithm>
 #include <queue>
-#include <utility>
 using namespace std;
 
 struct Node {
@@ -16,14 +14,14 @@ struct Node {
 
 class Maze {
  private:
-  int column;
-  int row;
+  int column {0};
+  int row {0};
   char **grid;
  public:
   Maze(string filename) {
     ifstream fin(filename);
     if (!fin.is_open()) {
-      cout << endl << filename << " does not exist!" << endl << endl;
+      std::cout << endl << filename << " does not exist!" << endl << endl;
     } else {
       fin >> column >> row;
 
@@ -44,7 +42,7 @@ class Maze {
     for (int i = 0; i < row; i++) {
       delete [] grid[i];
     }
-    delete [] grid;
+    if (row != 0) delete [] grid;
   }
   
   char Getgrid(int x, int y) {
@@ -63,16 +61,16 @@ class Maze {
   bool Inbounds(int x, int y) {
     if (x >= 0 && x < row && y >= 0 && y < column) {
       return true;
-	}
+	  }
 	return false;
   }
   void Print(int row, int column) {
   	for (int i = 0; i < row; i++) {
   	  for (int j = 0; j < column; j++) {
-  	  	cout << grid[i][j];
+  	  	std::cout << grid[i][j];
       }
-	  cout << endl;
-	}
+	  std::cout << endl;
+	  } 
   }
   
   void Copy(int row, int column) {
@@ -80,9 +78,9 @@ class Maze {
   	  for (int j = 0; j < column; j++) {
   	  	if (grid[i][j] == 'V') {
   	      grid[i][j] = 'R';
-		}
+		    }
       }
-	}
+	  }
   }
 };
 
@@ -132,6 +130,10 @@ int dx[4] = {0, 1, 0, -1};  // 右 下 左 上
 int dy[4] = {1, 0, -1, 0};
 
 void Mission1(Maze &maze) {
+  if (maze.Getcolumn() == 0 || maze.Getrow() == 0) {
+    return;
+  }
+
   Stack path;
   int x = 0, y = 0;
   int dir = 0;  
@@ -170,14 +172,77 @@ void Mission1(Maze &maze) {
     if (maze.Getgrid(curx, cury) == 'G') {
       maze.Print(maze.Getrow(), maze.Getcolumn()); 
       maze.Copy(maze.Getrow(), maze.Getcolumn());
-      cout << endl;
+      std::cout << endl;
       maze.Print(maze.Getrow(), maze.Getcolumn());
+      cout << endl << endl;
       return;
     }
 
     if (!moved) continue;  // 若四個方向都不通，就回到上一次的節點
   }
   maze.Print(maze.Getrow(), maze.Getcolumn());
+  cout << endl << endl;
+}
+
+void Mission2(Maze &maze, int N) {
+  Stack path;
+  int x = 0, y = 0, dir = 0;
+  int goals = 0;
+  vector<pair<int, int>> goal;  // 記錄走過的目標
+  path.push(x, y, dir);
+  maze.Setgrid(x, y, 'V');  // 起點標記為已走過
+
+  int curx, cury, curdir;
+
+  while (!path.Isempty()) {
+    path.pop(curx, cury, curdir);
+    bool moved = false;
+    for (; curdir < 4; curdir++) {
+      int nextx = curx + dx[curdir];
+      int nexty = cury + dy[curdir];
+
+      if (!maze.Inbounds(nextx, nexty)) continue;  // 超出邊界
+      if (maze.Getgrid(nextx, nexty) == 'O' || maze.Getgrid(nextx, nexty) == 'V') continue;  // 遇到障礙或走過
+
+      // 推入目前位置（若下一格走不通回來時要試下一方向）
+      path.push(curx, cury, curdir + 1);
+      path.push(nextx, nexty, 0);
+
+      if (maze.Getgrid(nextx, nexty) == 'G') {
+        bool same = false;
+        for (int i = 0; i < goals; i++) {
+          if (goal[i].first == nextx && goal[i].second == nexty) {
+            same = true;
+            break;
+          }
+        }
+        if (!same) {
+          goal.push_back({nextx, nexty});
+          goals++;
+
+          // ✅ 若已找到 N 個目標，立即輸出結果
+          if (goals == N) {
+            maze.Print(maze.Getrow(), maze.Getcolumn());
+            cout << endl;
+            maze.Copy(maze.Getrow(), maze.Getcolumn());
+            maze.Print(maze.Getrow(), maze.Getcolumn());
+            cout << endl << endl;
+            return;
+          }
+        }
+      } else {
+        // 一般空格才標記為 V
+        maze.Setgrid(nextx, nexty, 'V');
+      }
+      moved = true;
+      break;
+    }
+    if (!moved) continue;  // 若四個方向都不通就回溯
+  }
+
+  //若沒找到足夠的目標
+  maze.Print(maze.Getrow(), maze.Getcolumn());
+  cout << endl << endl;
 }
 
 void Mission3(Maze &maze) {
@@ -233,6 +298,7 @@ void Mission3(Maze &maze) {
   cout << endl;
   cout << "The maze has " << goals << " goal(s) in total." << endl; 
 }
+
 struct Node_mission4 {
   int x, y;
   int distance;
@@ -295,18 +361,13 @@ int main() {
       cin >> filenumber;
       string filename = "input" + to_string(filenumber) + ".txt";
       if (maze != nullptr) delete maze;
-        maze = new Maze(filename);
-        if (maze->Isempty()) {
-          cout << filename << " does not exist!" << endl;
-          cout << endl;
-        } else {
-          Mission1(*maze);
-        }
+      maze = new Maze(filename);
+      Mission1(*maze);
     } else if (command == "2") {
       if (maze == nullptr) {
         cout << "### Execute command 1 to load a maze! ###" << endl;
         cout << endl;
-	  } else {
+	    } else {
         int goals;
         cout << "Number of G (goals):";
         cin >> goals;
@@ -316,7 +377,7 @@ int main() {
       if (maze == nullptr) {
         cout << "### Execute command 1 to load a maze! ###" << endl;
         cout << endl;
-	  } else {
+	    } else {
         Mission3(*maze);
       }
     } else if (command == "4") {
