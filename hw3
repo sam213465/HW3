@@ -44,12 +44,12 @@ class Maze {
     }
     if (row != 0) delete [] grid;
   }
-  
+
   char Getgrid(int x, int y) {
   	return grid[x][y];
   }
-  void Setgrid(int x, int y, char val) { 
-    grid[x][y] = val; 
+  void Setgrid(int x, int y, char val) {
+    grid[x][y] = val;
   }
   int Getrow() {
   	return row;
@@ -70,9 +70,9 @@ class Maze {
   	  	std::cout << grid[i][j];
       }
 	  std::cout << endl;
-	  } 
+	  }
   }
-  
+
   void Copy(int row, int column) {
   	for (int i = 0; i < row; i++) {
   	  for (int j = 0; j < column; j++) {
@@ -80,7 +80,21 @@ class Maze {
   	      grid[i][j] = 'R';
 		    }
       }
-	  }
+    }
+  }
+
+  void Restore(int row, int column) {
+  	for (int i = 0; i < row; i++) {
+  	  for (int j = 0; j < column; j++) {
+  	  	if (grid[i][j] == 'V' || grid[i][j] == 'R') {
+  	      grid[i][j] = 'E';
+        }
+      }
+    }
+  }
+
+  void Change(int x, int y) {
+    grid[x][y] = 'G';
   }
 };
 
@@ -136,7 +150,7 @@ void Mission1(Maze &maze) {
 
   Stack path;
   int x = 0, y = 0;
-  int dir = 0;  
+  int dir = 0;
 
   path.push(x, y, dir);
   maze.Setgrid(x, y, 'V');
@@ -148,7 +162,7 @@ void Mission1(Maze &maze) {
 
     bool moved = false;
     for (int i = 0; i < 4; i++) {
-      int nextdir = (curdir + i) % 4; 
+      int nextdir = (curdir + i) % 4;
       int nextx = curx + dx[nextdir];
       int nexty = cury + dy[nextdir];
 
@@ -168,9 +182,9 @@ void Mission1(Maze &maze) {
       moved = true;
       break;
     }
-      
+
     if (maze.Getgrid(curx, cury) == 'G') {
-      maze.Print(maze.Getrow(), maze.Getcolumn()); 
+      maze.Print(maze.Getrow(), maze.Getcolumn());
       maze.Copy(maze.Getrow(), maze.Getcolumn());
       std::cout << endl;
       maze.Print(maze.Getrow(), maze.Getcolumn());
@@ -184,68 +198,82 @@ void Mission1(Maze &maze) {
   cout << endl << endl;
 }
 
-void Mission2(Maze &maze, int N) {
+void Mission2(Maze &maze, int howmanygoals) {
   Stack path;
+  maze.Restore(maze.Getrow(), maze.Getcolumn());
   int x = 0, y = 0, dir = 0;
   int goals = 0;
-  vector<pair<int, int>> goal;  // 記錄走過的目標
-  path.push(x, y, dir);
-  maze.Setgrid(x, y, 'V');  // 起點標記為已走過
+  vector<pair<int,int>> visitedgoals;
 
-  int curx, cury, curdir;
+  path.push(x, y, dir);
+  maze.Setgrid(x, y, 'V');
 
   while (!path.Isempty()) {
+    int curx, cury, curdir;
     path.pop(curx, cury, curdir);
+
+
     bool moved = false;
-    for (; curdir < 4; curdir++) {
-      int nextx = curx + dx[curdir];
-      int nexty = cury + dy[curdir];
+    for (int i = 0; i < 4; i++) {
+      int nextdir = (curdir + i) % 4;
+      int nextx = curx + dx[nextdir];
+      int nexty = cury + dy[nextdir];
 
-      if (!maze.Inbounds(nextx, nexty)) continue;  // 超出邊界
-      if (maze.Getgrid(nextx, nexty) == 'O' || maze.Getgrid(nextx, nexty) == 'V') continue;  // 遇到障礙或走過
+      if (!maze.Inbounds(nextx, nexty)) continue;
 
-      // 推入目前位置（若下一格走不通回來時要試下一方向）
-      path.push(curx, cury, curdir + 1);
-      path.push(nextx, nexty, 0);
+      if (maze.Getgrid(nextx, nexty) == 'O' || maze.Getgrid(nextx, nexty) == 'V') continue;
 
       if (maze.Getgrid(nextx, nexty) == 'G') {
-        bool same = false;
+        bool alreadyvisited = false;
         for (int i = 0; i < goals; i++) {
-          if (goal[i].first == nextx && goal[i].second == nexty) {
-            same = true;
+          if (visitedgoals[i].first == nextx && visitedgoals[i].second == nexty) {
+            alreadyvisited = true;
             break;
           }
         }
-        if (!same) {
-          goal.push_back({nextx, nexty});
-          goals++;
+      if (!alreadyvisited) {
+        visitedgoals.push_back({nextx, nexty});
+        goals++;
 
-          // ✅ 若已找到 N 個目標，立即輸出結果
-          if (goals == N) {
-            maze.Print(maze.Getrow(), maze.Getcolumn());
-            cout << endl;
-            maze.Copy(maze.Getrow(), maze.Getcolumn());
-            maze.Print(maze.Getrow(), maze.Getcolumn());
-            cout << endl << endl;
-            return;
+        if (goals == howmanygoals) {
+          for (int i = 0; i < goals; i++) {
+            maze.Change(visitedgoals[i].first, visitedgoals[i].second);
           }
+
+          maze.Print(maze.Getrow(), maze.Getcolumn());
+          maze.Copy(maze.Getrow(), maze.Getcolumn());
+          cout << endl;
+          maze.Print(maze.Getrow(), maze.Getcolumn());
+          return;
         }
-      } else {
-        // 一般空格才標記為 V
-        maze.Setgrid(nextx, nexty, 'V');
       }
+
+      maze.Setgrid(nextx, nexty, 'V'); //將 G 標記為 V
+      } else {
+        maze.Setgrid(nextx, nexty, 'V'); // E 標記為 V
+      }
+
+
+      path.push(curx, cury, (nextdir + 1) % 4); // 回退點
+      path.push(nextx, nexty, nextdir);
+
       moved = true;
       break;
     }
-    if (!moved) continue;  // 若四個方向都不通就回溯
-  }
 
-  //若沒找到足夠的目標
-  maze.Print(maze.Getrow(), maze.Getcolumn());
-  cout << endl << endl;
+      if (!moved) continue;
+    }
+
+    // 沒找到足夠目標，輸出一次 V
+    for (int i = 0; i < goals; i++) {
+      maze.Change(visitedgoals[i].first, visitedgoals[i].second);
+    }
+    maze.Print(maze.Getrow(), maze.Getcolumn());
 }
 
+
 void Mission3(Maze &maze) {
+  maze.Restore(maze.Getrow(), maze.Getcolumn());
   Stack path;
   int x = 0, y = 0, dir = 0;
   int goals = 0;
@@ -265,7 +293,7 @@ void Mission3(Maze &maze) {
       if (!maze.Inbounds(nextx, nexty)) continue;  // 超過邊界
       if (maze.Getgrid(nextx, nexty) == 'O' || maze.Getgrid(nextx, nexty) == 'V') continue;  // 遇到障礙或已走過
 
-            
+
       path.push(curx, cury, curdir + 1);  //如果下一格走不通，回來時要嘗試下一個方向
       path.push(nextx, nexty, 0);  // 把下一步放進堆疊
 
@@ -294,9 +322,9 @@ void Mission3(Maze &maze) {
     }
     if (!moved) continue;  //若四個方向都不通，就回到上一次的節點
   }
-  maze.Print(maze.Getrow(), maze.Getcolumn()); 
+  maze.Print(maze.Getrow(), maze.Getcolumn());
   cout << endl;
-  cout << "The maze has " << goals << " goal(s) in total." << endl; 
+  cout << "The maze has " << goals << " goal(s) in total." << endl;
 }
 
 struct Node_mission4 {
@@ -319,6 +347,8 @@ void Mission4(Maze &maze) {
     if (maze.Getgrid(cur.x, cur.y) == 'G') {  // 找到最短路徑
       maze.Print(maze.Getrow(), maze.Getcolumn());
       cout << endl;
+      maze.Copy(maze.Getrow(), maze.Getcolumn());
+      maze.Print(maze.Getrow(), maze.Getcolumn());
       cout << "Shortest path length = " << cur.distance+1 << endl;
       return;
     }
