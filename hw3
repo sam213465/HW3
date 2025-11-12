@@ -368,47 +368,6 @@ struct Node_mission4 {
   int x, y;
   int distance;
 };
-/*
-void Mission4(Maze &maze) {
-  vector<vector<bool>> visited(maze.Getrow(), vector<bool>(maze.Getcolumn(), false));
-  queue<Node_mission4> q;
-
-  q.push({0, 0, 0});
-  visited[0][0] = true;
-  maze.Setgrid(0, 0, 'V');
-
-  while (!q.empty()) {
-    Node_mission4 cur = q.front();  // 每次從佇列取出一個節點
-    q.pop();
-
-    if (maze.Getgrid(cur.x, cur.y) == 'G') {  // 找到最短路徑
-      maze.Print(maze.Getrow(), maze.Getcolumn());
-      cout << endl;
-      maze.Copy(maze.Getrow(), maze.Getcolumn());
-      maze.Print(maze.Getrow(), maze.Getcolumn());
-      cout << endl;
-      cout << "Shortest path length = " << cur.distance+1 << endl << endl;
-      return;
-    }
-
-    for (int i = 0; i < 4; i++) {
-      int nextx = cur.x + dx[i];
-      int nexty = cur.y + dy[i];
-      if (!maze.Inbounds(nextx, nexty)) continue;
-      if (maze.Getgrid(nextx, nexty) == 'O' || visited[nextx][nexty]) continue;  // 遇到障礙或已走過
-
-      visited[nextx][nexty] = true;  // 標記已走過
-      if (maze.Getgrid(nextx, nexty) != 'G')
-      maze.Setgrid(nextx, nexty, 'V');
-      q.push({nextx, nexty, cur.distance + 1});  // 把下一格加入佇列，並讓距離加 1
-    }
-  }
-
-  // 沒有路徑
-  maze.Print(maze.Getrow(), maze.Getcolumn());
-  cout << endl;
-}
-*/
 
 void Mission4(Maze &maze) {
   Stack path, bestpath;
@@ -420,9 +379,9 @@ void Mission4(Maze &maze) {
   int curx, cury, curdir;
   while (!path.Isempty()) {
     path.pop(curx, cury, curdir);
-    
-    cout << "Current position: (" << curx << ", " << cury << "), Path size: " << path.getSize() + 1 << endl;
-    maze.Print(maze.Getrow(), maze.Getcolumn());
+
+    //cout << "Current position: (" << curx << ", " << cury << "), Path size: " << path.getSize() + 1 << endl;
+    //maze.Print(maze.Getrow(), maze.Getcolumn());
     cout << endl;
 
     for (int i = 0; i < 4; i++) {
@@ -454,11 +413,51 @@ void Mission4(Maze &maze) {
   cout << endl;
   maze.Restore(maze.Getrow(), maze.Getcolumn());
   // 標記最佳路徑
-  Node* curr = bestpath.copy();
-  curr = curr->next;
-  while (curr) {
-    maze.Setgrid(curr->r, curr->c, 'R');
-    curr = curr->next;
+  vector<vector<bool>> visited(maze.Getrow(), vector<bool>(maze.Getcolumn(), false));
+  vector<vector<pair<int,int>>> shortpath(maze.Getrow(), vector<pair<int,int>>(maze.Getcolumn(), {-1, -1}));
+  queue<Node_mission4> q;
+
+  q.push({0, 0, 0});
+  visited[0][0] = true;
+  maze.Setgrid(0, 0, 'V');
+
+  while (!q.empty()) {
+    Node_mission4 cur = q.front();  // 每次從佇列取出一個節點
+    q.pop();
+    //cout << cur.x << "," << cur.y << "->1" << endl;
+    if (maze.Getgrid(cur.x, cur.y) == 'G') {  // 找到最短路徑
+      int spx = cur.x;
+      int spy = cur.y;
+      while (!(spx == 0 && spy == 0)) {
+        maze.Setgrid(spx, spy, 'R');
+        auto sp = shortpath[spx][spy];
+        spx = sp.first;
+        spy = sp.second;
+        maze.Setgrid(cur.x, cur.y, 'G');
+      }
+      maze.Setgrid(0, 0, 'R');
+      cout << endl;
+      maze.Print(maze.Getrow(), maze.Getcolumn());
+      cout << endl;
+      cout << "Shortest path length = " << cur.distance+1 << endl;
+      cout << endl;
+      return;
+    }
+
+    for (int i = 0; i < 4; i++) {
+      int nextx = cur.x + dx[i];
+      int nexty = cur.y + dy[i];
+
+      if (!maze.Inbounds(nextx, nexty)) continue;
+      if (maze.Getgrid(nextx, nexty) == 'O' || visited[nextx][nexty]) continue;  // 遇到障礙或已走過
+
+      visited[nextx][nexty] = true;  // 標記已走過
+      shortpath[nextx][nexty] = {cur.x, cur.y};
+      if (maze.Getgrid(nextx, nexty) != 'G')
+      maze.Setgrid(nextx, nexty, 'V');
+      //cout << nextx << "," << nexty << endl;
+      q.push({nextx, nexty, cur.distance + 1});  // 把下一格加入佇列，並讓距離加 1
+    }
   }
   maze.Print(maze.Getrow(), maze.Getcolumn());
   cout << endl;
