@@ -428,6 +428,7 @@ void Mission4(Maze &maze) {
     if (maze.Getgrid(cur.x, cur.y) == 'G') {  // 找到最短路徑
       int spx = cur.x;
       int spy = cur.y;
+      maze.Restore(maze.Getrow(), maze.Getcolumn());
       while (!(spx == 0 && spy == 0)) {
         maze.Setgrid(spx, spy, 'R');
         auto sp = shortpath[spx][spy];
