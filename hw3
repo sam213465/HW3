@@ -3,6 +3,7 @@
 #include <string>
 #include <vector>
 #include <queue>
+#include <limits>
 
 using namespace std;
 
@@ -452,6 +453,10 @@ void Mission3(Maze &maze) {
 }
 
 void Mission4(Maze &maze) {
+  if (maze.Getcolumn() == 0 || maze.Getrow() == 0) {
+    return;
+  }
+
   Stack path;
   Node * bestpath = nullptr;
 
@@ -462,11 +467,13 @@ void Mission4(Maze &maze) {
   maze.SetVisited(curx, cury, true);
 
   while (!path.Isempty()) {
+   
 
+    /*  追蹤目前路徑狀態用
     cout << "Current path size: " << path.Getsize() << endl;
     maze.Print();
     cout << endl;
-
+    */
     bool moved = false;
     for (int i = 0; i < 4; i++) {
       int nextdir = (curdir + i) % 4;
@@ -476,11 +483,13 @@ void Mission4(Maze &maze) {
       if (!maze.Inbounds(nextx, nexty)) continue; // 超過邊界
       if (maze.Getgrid(nextx, nexty) == 'O' || path.Getdir_changed(nextdir)) continue;  // 遇到障礙或已走過
       if (bestpath != nullptr && path.Getsize() >= bestsize - 1) continue; 
+      if (maze.Getgrid(nextx, nexty) == 'V') continue;
 
       path.ChangeTop((nextdir + 1) % 4);  // 回溯時要從下個方向開始
       path.Setdir_changed(nextdir);
       path.Push(nextx, nexty, nextdir);  // 把下一步放進堆疊
-      maze.Setgrid(nextx, nexty, 'V');
+      maze.SetVisited(nextx, nexty, true);
+      if (maze.Getgrid(nextx, nexty) != 'G') maze.Setgrid(nextx, nexty, 'V');
 
       moved = true;
       if (maze.Getgrid(nextx, nexty) == 'G') {
@@ -493,10 +502,10 @@ void Mission4(Maze &maze) {
     }
 
     if (!moved) {
-      path.Pop(curx, cury, curdir);
       if (maze.Getgrid(curx, cury) != 'G') {
         maze.Setgrid(curx, cury, 'E');
       }
+      path.Pop(curx, cury, curdir);
     }
 
     if (!path.Isempty()) {
@@ -552,17 +561,23 @@ int main() {
       Mission1(*maze);
     } else if (command == "2") {
       if (maze == nullptr) {
-        cout << "### Execute command 1 to load a maze! ###" << endl;
+        cout << "\n### Execute command 1 to load a maze! ###" << endl;
         cout << endl;
 	    } else {
         int goals;
         cout << "\nNumber of G (goals): ";
         cin >> goals;
+        while (cin.fail() || goals <= 0) {
+          cin.clear();
+          cin.ignore(numeric_limits<streamsize>::max(), '\n');  //忽略 streamsize 型別所能表示的最大值或到達換行符為止的所有字元
+          cout << "\nNumber of G (goals): ";
+          cin >> goals;
+        }
         Mission2(*maze, goals);
       }
     } else if (command == "3") {
       if (maze == nullptr) {
-        cout << "### Execute command 1 to load a maze! ###" << endl;
+        cout << "\n### Execute command 1 to load a maze! ###" << endl;
         cout << endl;
 	    } else {
         Mission3(*maze);
