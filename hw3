@@ -150,21 +150,32 @@ class Stack {
     dir = top->dir;
   }
 
-  Node* copy() {
+Node* copy() {
     if (!top) return nullptr;
-    // 先把所有節點放進暫存vector，反向重建
-    vector<Node*> nodes;
-    Node* curr = top;
-    while (curr) {
-      Node* n = new Node(*curr);
-      n->next = nullptr;
-      nodes.push_back(n);
-      curr = curr->next;
+
+    Node* newTop = new Node;
+    newTop->r = top->r;
+    newTop->c = top->c;
+    newTop->dir = top->dir;
+    newTop->next = nullptr;
+
+    Node* currOld = top->next;
+    Node* currNew = newTop;
+
+    while (currOld) {
+        Node* n = new Node;
+        n->r = currOld->r;
+        n->c = currOld->c;
+        n->dir = currOld->dir;
+        n->next = nullptr;
+        currNew->next = n;
+        currNew = n;
+        currOld = currOld->next;
     }
-    for (int i = 0; i < (int)nodes.size() - 1; i++)
-      nodes[i]->next = nodes[i + 1];
-    return nodes[0];
-  }
+
+    return newTop;
+}
+
 
   void setPath(Node * head) {
     top = head;
@@ -368,7 +379,8 @@ struct Node_mission4 {
   int x, y;
   int distance;
 };
-
+int dx4[4] = {-1, 0, 1, 0}; // 上、右、下、左
+int dy4[4] = {0, 1, 0, -1};
 void Mission4(Maze &maze) {
   Stack path, bestpath;
   int x = 0, y = 0, dir = 0;
@@ -379,9 +391,8 @@ void Mission4(Maze &maze) {
   int curx, cury, curdir;
   while (!path.Isempty()) {
     path.pop(curx, cury, curdir);
-
-    //cout << "Current position: (" << curx << ", " << cury << "), Path size: " << path.getSize() + 1 << endl;
-    //maze.Print(maze.Getrow(), maze.Getcolumn());
+    cout << "Current position: (" << curx << ", " << cury << "), Path size: " << path.getSize() + 1 << endl;
+    maze.Print(maze.Getrow(), maze.Getcolumn());
     cout << endl;
 
     for (int i = 0; i < 4; i++) {
@@ -396,6 +407,7 @@ void Mission4(Maze &maze) {
       path.push(curx, cury, nextdir);
       path.push(nextx, nexty, nextdir);
 
+      cout << nextx << "," << nexty << ", " << nextdir << endl;
       if (maze.Getgrid(nextx, nexty) != 'G') {
         maze.Setgrid(nextx, nexty, 'V');
       } else {
@@ -404,6 +416,7 @@ void Mission4(Maze &maze) {
           // 複製目前路徑為最佳路徑
           bestpath.setPath(path.copy());
           bestpath.setSize(path.getSize());
+          int bestsize = bestpath.getSize();
         }
       }
       break;  // 只走一個方向
@@ -446,8 +459,8 @@ void Mission4(Maze &maze) {
     }
 
     for (int i = 0; i < 4; i++) {
-      int nextx = cur.x + dx[i];
-      int nexty = cur.y + dy[i];
+      int nextx = cur.x + dx4[i];
+      int nexty = cur.y + dy4[i];
 
       if (!maze.Inbounds(nextx, nexty)) continue;
       if (maze.Getgrid(nextx, nexty) == 'O' || visited[nextx][nexty]) continue;  // 遇到障礙或已走過
@@ -466,6 +479,7 @@ void Mission4(Maze &maze) {
 
 int main() {
   Maze *maze = nullptr;
+  Maze *maze_mission4 = nullptr;
   while (1) {
     cout << "*** (^_^) Data Structure (^o^) ***" << endl;
     cout << "*** Find the Goal(s) in a Maze ***" << endl;
@@ -508,14 +522,9 @@ int main() {
       cout << "\nInput a file number: ";
       cin >> number;
       string filename = "input" + to_string(number) + ".txt";
-      Maze * maze_mission4;
+      if (maze_mission4 != nullptr) delete maze;
       maze_mission4 = new Maze(filename);
-      if (maze_mission4 == nullptr) {
-        cout << filename << " does not exist!" << endl;
-        cout << endl;
-      } else {
-        Mission4(*maze_mission4);
-      }
+      Mission1(*maze_mission4);
     } else if (command == "0") {
       break;
     } else {
