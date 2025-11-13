@@ -10,6 +10,7 @@ struct Node {
   int r;
   int c;
   int dir;
+  bool dir_changed[4] = {false, false, false, false};
   Node * next;
 };
 
@@ -36,7 +37,7 @@ class Stack {
     return false;
   }
 
-  void push(int r, int c, int d) {
+  void Push(int r, int c, int d) {
     Node *newnode = new Node;
     newnode->r = r;
     newnode->c = c;
@@ -45,7 +46,7 @@ class Stack {
     top = newnode;
   }
 
-  bool pop(int &x, int &y, int &dir) {
+  bool Pop(int &x, int &y, int &dir) {
     if (!top) return false;
     x = top->r;
     y = top->c;
@@ -61,14 +62,15 @@ class Stack {
     x = top->r;
     y = top->c;
     dir = top->dir;
+    bool dir_changed[4] = {false, false, false, false};
   }
 
-  void changeTop(int d) {
+  void ChangeTop(int d) {
     if (!top) return;
     top->dir = d;
   }
 
-  Node* copy() {
+  Node* Copy() {
     if (!top) return nullptr;
     Node* curr = top->next;
     Node* head = nullptr;
@@ -90,6 +92,14 @@ class Stack {
       curr = curr->next;
     }
     return size;
+  }
+
+  bool Getdir_changed(int d) {
+    return top->dir_changed[d];
+  }
+
+  void Setdir_changed(int d) {
+    top->dir_changed[d] = true;
   }
 };
 
@@ -114,6 +124,9 @@ class Maze {
           fin >> grid[i][j];
         }
       }
+    } else {
+      cout << endl << filename << " does not exist!" << endl << endl;
+      return;
     }
     fin.close();
 
@@ -176,7 +189,7 @@ class Maze {
   	Restore();
     while (!path.Isempty()) {
       int x, y, dir;
-      path.pop(x, y, dir);
+      path.Pop(x, y, dir);
       Setgrid(x, y, 'R');
     }
   }
@@ -204,7 +217,7 @@ void Mission1(Maze &maze) {
   int x = 0, y = 0;
   int dir = 0;
 
-  path.push(x, y, dir);
+  path.Push(x, y, dir);
   maze.Setgrid(x, y, 'V');
   maze.SetVisited(x, y, true);
 
@@ -223,15 +236,15 @@ void Mission1(Maze &maze) {
       if (maze.Getgrid(nextx, nexty) == 'O' || maze.GetVisited(nextx, nexty) == true) continue;  // 遇到障礙或已走過
 
       moved = true;
-      path.changeTop((nextdir + 1) % 4);  // 回溯時要從下個方向開始
-      path.push(nextx, nexty, nextdir);  // 把下一步放進堆疊
+      path.ChangeTop((nextdir + 1) % 4);  // 回溯時要從下個方向開始
+      path.Push(nextx, nexty, nextdir);  // 把下一步放進堆疊
       maze.SetVisited(nextx, nexty, true);
       
       break;
     }
 
     if (!moved) {
-      path.pop(curx, cury, curdir);
+      path.Pop(curx, cury, curdir);
     }
     if (!path.Isempty()) {
       path.Gettop(curx, cury, curdir);
@@ -253,7 +266,7 @@ void Mission1(Maze &maze) {
 
     maze.Print();
     cout << endl;
-    Node * road = path.copy();
+    Node * road = path.Copy();
     maze.Restore();
     for (Node * p = road; p != nullptr; p = p->next) {
       maze.Setgrid(p->r, p->c, 'R');
@@ -286,16 +299,14 @@ void Mission2(Maze &maze, int howmanygoals) {
   }
 
   Stack path;
-  int x = 0, y = 0, dir = 0;
-
-  path.push(x, y, dir);
-  maze.Setgrid(x, y, 'V');
-  maze.SetVisited(x, y, true);
-
-  int goals = 0;
   vector<pair<int, int>> visitedgoals;
+  int curx = 0, cury = 0, curdir = 0;
+  int goals = 0;
 
-  int curx, cury, curdir;
+  path.Push(curx, cury, curdir);
+  maze.Setgrid(curx, cury, 'V');
+  maze.SetVisited(curx, cury, true);
+
   path.Gettop(curx, cury, curdir);  // 取出目前位置
 
   bool moved;
@@ -310,8 +321,8 @@ void Mission2(Maze &maze, int howmanygoals) {
       if (!maze.Inbounds(nextx, nexty)) continue; // 超過邊界
       if (maze.Getgrid(nextx, nexty) == 'O' || maze.GetVisited(nextx, nexty) == true) continue;  // 遇到障礙或已走過
 
-      path.changeTop((nextdir + 1) % 4);  // 回溯時要從下個方向開始
-      path.push(nextx, nexty, nextdir);  // 把下一步放進堆疊
+      path.ChangeTop((nextdir + 1) % 4);  // 回溯時要從下個方向開始
+      path.Push(nextx, nexty, nextdir);  // 把下一步放進堆疊
       maze.SetVisited(nextx, nexty, true);
 
       moved = true;
@@ -323,7 +334,7 @@ void Mission2(Maze &maze, int howmanygoals) {
     }
 
     if (!moved) {
-      path.pop(curx, cury, curdir);
+      path.Pop(curx, cury, curdir);
     }
 
     if (!path.Isempty()) {
@@ -365,7 +376,7 @@ void Mission2(Maze &maze, int howmanygoals) {
     }
 
     // 標記路徑為 R
-    for (Node * p = path.copy(); p != nullptr; p = p->next) {
+    for (Node * p = path.Copy(); p != nullptr; p = p->next) {
       if (maze.Getgrid(p->r, p->c) != 'G') {
         maze.Setgrid(p->r, p->c, 'R');
       }
@@ -375,6 +386,145 @@ void Mission2(Maze &maze, int howmanygoals) {
     cout << endl << endl;
     return;
   }
+}
+
+void Mission3(Maze &maze) {
+  // 重設迷宮
+  maze.Restore();
+  for (int i = 0; i < maze.Getrow(); i++) {
+    for (int j = 0; j < maze.Getcolumn(); j++) {
+      maze.SetVisited(i, j, false);
+    }
+  }
+
+  Stack path;
+  vector<pair<int, int>> visitedgoals;
+  int goals = 0;
+  int curx = 0, cury = 0, curdir = 0;
+
+  path.Push(curx, cury, curdir);
+  maze.Setgrid(curx, cury, 'V');
+  maze.SetVisited(curx, cury, true);
+
+  while (!path.Isempty()) {
+    bool moved = false;
+    for (int i = 0; i < 4; i++) {
+      int nextdir = (curdir + i) % 4;
+      int nextx = curx  + dx[nextdir];
+      int nexty = cury + dy[nextdir];
+
+      if (!maze.Inbounds(nextx, nexty)) continue; // 超過邊界
+      if (maze.Getgrid(nextx, nexty) == 'O' || maze.GetVisited(nextx, nexty) == true) continue;  // 遇到障礙或已走過
+
+      path.ChangeTop((nextdir + 1) % 4);  // 回溯時要從下個方向開始
+      path.Push(nextx, nexty, nextdir);  // 把下一步放進堆疊
+
+      moved = true;
+      if (maze.Getgrid(nextx, nexty) == 'G' && maze.GetVisited(nextx, nexty) == false) {
+        goals++;
+        visitedgoals.push_back({nextx, nexty});
+      }
+      maze.SetVisited(nextx, nexty, true);
+      break;
+    }
+
+    if (!moved) {
+      path.Pop(curx, cury, curdir);
+    }
+
+    if (!path.Isempty()) {
+      path.Gettop(curx, cury, curdir);
+    }
+  }
+
+  for (int i = 0; i < maze.Getrow(); i++) {
+    for (int j = 0; j < maze.Getcolumn(); j++) {
+      if (maze.GetVisited(i, j) == true && maze.Getgrid(i, j) != 'G') {
+        maze.Setgrid(i, j, 'V');
+      }
+    }
+  }
+  maze.Print();
+  cout << endl;
+  cout << "The maze has " << goals << " goal(s) in total." << endl << endl;
+
+  return;
+}
+
+void Mission4(Maze &maze) {
+  Stack path;
+  Node * bestpath = nullptr;
+
+  int curx = 0, cury = 0, curdir = 0;
+  int bestsize = 0;
+  path.Push(curx, cury, curdir);
+  maze.Setgrid(curx, cury, 'V');
+  maze.SetVisited(curx, cury, true);
+
+  while (!path.Isempty()) {
+
+    cout << "Current path size: " << path.Getsize() << endl;
+    maze.Print();
+    cout << endl;
+
+    bool moved = false;
+    for (int i = 0; i < 4; i++) {
+      int nextdir = (curdir + i) % 4;
+      int nextx = curx  + dx[nextdir];
+      int nexty = cury + dy[nextdir];
+
+      if (!maze.Inbounds(nextx, nexty)) continue; // 超過邊界
+      if (maze.Getgrid(nextx, nexty) == 'O' || path.Getdir_changed(nextdir)) continue;  // 遇到障礙或已走過
+      if (bestpath != nullptr && path.Getsize() >= bestsize - 1) continue; 
+
+      path.ChangeTop((nextdir + 1) % 4);  // 回溯時要從下個方向開始
+      path.Setdir_changed(nextdir);
+      path.Push(nextx, nexty, nextdir);  // 把下一步放進堆疊
+      maze.Setgrid(nextx, nexty, 'V');
+
+      moved = true;
+      if (maze.Getgrid(nextx, nexty) == 'G') {
+        // 找到一條到達目標的路徑，檢查是否為最短路徑
+        bestpath = path.Copy();
+        bestsize = path.Getsize();
+      }
+      maze.SetVisited(nextx, nexty, true);
+      break;
+    }
+
+    if (!moved) {
+      path.Pop(curx, cury, curdir);
+      if (maze.Getgrid(curx, cury) != 'G') {
+        maze.Setgrid(curx, cury, 'E');
+      }
+    }
+
+    if (!path.Isempty()) {
+      path.Gettop(curx, cury, curdir);
+    }
+  }
+
+  for (int i = 0; i < maze.Getrow(); i++) {
+    for (int j = 0; j < maze.Getcolumn(); j++) {
+      if (maze.GetVisited(i, j) == true && maze.Getgrid(i, j) != 'G') {
+        maze.Setgrid(i, j, 'V');
+      }
+    }
+  }
+  maze.Print();
+  cout << endl;
+
+  maze.Restore();
+  for (Node * p = bestpath; p != nullptr; p = p->next) {
+    if (maze.Getgrid(p->r, p->c) != 'G') {
+      maze.Setgrid(p->r, p->c, 'R');
+    }
+  }
+  maze.Print();
+  cout << endl;
+  cout << "Shortest path length = " << bestsize << endl << endl;
+
+  return;
 }
 
 int main() {
@@ -415,7 +565,7 @@ int main() {
         cout << "### Execute command 1 to load a maze! ###" << endl;
         cout << endl;
 	    } else {
-        //Mission3(*maze);
+        Mission3(*maze);
       }
     } else if (command == "4") {
       int number;
