@@ -21,7 +21,7 @@ class Maze {
   Maze(string filename) {
     ifstream fin(filename);
     if (!fin.is_open()) {
-      std::cout << endl << filename << " does not exist!" << endl << endl;
+      cout << endl << filename << " does not exist!" << endl << endl;
     } else {
       fin >> column >> row;
 
@@ -67,10 +67,10 @@ class Maze {
   void Print(int row, int column) {
   	for (int i = 0; i < row; i++) {
   	  for (int j = 0; j < column; j++) {
-  	  	std::cout << grid[i][j];
+  	  	cout << grid[i][j];
       }
-	  std::cout << endl;
-	  }
+      cout << endl;
+    }
   }
 
   void Copy(int row, int column) {
@@ -78,7 +78,7 @@ class Maze {
   	  for (int j = 0; j < column; j++) {
   	  	if (grid[i][j] == 'V') {
   	      grid[i][j] = 'R';
-		    }
+        }
       }
     }
   }
