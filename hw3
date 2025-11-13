@@ -526,7 +526,7 @@ int main() {
       string filename = "input" + to_string(number) + ".txt";
       if (maze_mission4 != nullptr) delete maze;
       maze_mission4 = new Maze(filename);
-      Mission1(*maze_mission4);
+      Mission4(*maze_mission4);
     } else if (command == "0") {
       break;
     } else {
