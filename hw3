@@ -379,6 +379,7 @@ void Mission2(Maze &maze, int howmanygoals) {
 
 int main() {
   Maze *maze = nullptr;
+  Maze *maze_mission4 = nullptr;
   while (1) {
     cout << "*** (^_^) Data Structure (^o^) ***" << endl;
     cout << "*** Find the Goal(s) in a Maze ***" << endl;
@@ -421,14 +422,9 @@ int main() {
       cout << "\nInput a file number: ";
       cin >> number;
       string filename = "input" + to_string(number) + ".txt";
-      Maze * maze_mission4;
+      if (maze_mission4 != nullptr) delete maze;
       maze_mission4 = new Maze(filename);
-      if (maze_mission4 == nullptr) {
-        cout << filename << " does not exist!" << endl;
-        cout << endl;
-      } else {
-        //Mission4(*maze_mission4);
-      }
+      Mission4(*maze_mission4);
     } else if (command == "0") {
       break;
     } else {
