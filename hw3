@@ -502,6 +502,7 @@ int main() {
       Mission1(*maze);
     } else if (command == "2") {
       if (maze == nullptr) {
+        cout << endl;
         cout << "### Execute command 1 to load a maze! ###" << endl;
         cout << endl;
 	    } else {
@@ -512,6 +513,7 @@ int main() {
       }
     } else if (command == "3") {
       if (maze == nullptr) {
+        cout << endl;
         cout << "### Execute command 1 to load a maze! ###" << endl;
         cout << endl;
 	    } else {
