@@ -1,5 +1,6 @@
 #include <iostream>
 #include <fstream>
+#include <sstream>
 #include <string>
 #include <vector>
 #include <queue>
@@ -445,6 +446,9 @@ void Mission3(Maze &maze) {
       }
     }
   }
+
+
+
   maze.Print();
   cout << endl;
   cout << "The maze has " << goals << " goal(s) in total." << endl << endl;
@@ -523,6 +527,11 @@ void Mission4(Maze &maze) {
   maze.Print();
   cout << endl;
 
+  if (bestsize == 0) {
+    cout << "\n### There is no path to find a goal! ### " << endl << endl;
+    return;
+  }
+
   maze.Restore();
   for (Node * p = bestpath; p != nullptr; p = p->next) {
     if (maze.Getgrid(p->r, p->c) != 'G') {
@@ -534,6 +543,22 @@ void Mission4(Maze &maze) {
   cout << "Shortest path length = " << bestsize << endl << endl;
 
   return;
+}
+
+// 檢查字串是否全為數字
+bool Checkstring(string str) {
+  if (str.length() == 0) {
+    return false;
+  }
+  for (int i = 0; i < str.size(); i++) {
+    if (i == 0 && str[i] == '-') {
+      continue;
+    }
+    if (str[i] < '0' || str[i] > '9') {
+      return false;
+    }
+  }
+  return true;
 }
 
 int main() {
@@ -551,11 +576,12 @@ int main() {
     string command;
     cout << "Input a command(0, 1, 2, 3, 4): ";
     cin >> command;
+
     if (command == "1") {
-      int filenumber;
+      string filenumber;
       cout << "\nInput a file number: ";
       cin >> filenumber;
-      string filename = "input" + to_string(filenumber) + ".txt";
+      string filename = "input" + filenumber + ".txt";
       if (maze != nullptr) delete maze;
       maze = new Maze(filename);
       Mission1(*maze);
@@ -564,16 +590,26 @@ int main() {
         cout << "\n### Execute command 1 to load a maze! ###" << endl;
         cout << endl;
 	    } else {
-        int goals;
+        string goals;
+        int goals_int = 1;
         cout << "\nNumber of G (goals): ";
+
         cin >> goals;
-        while (cin.fail() || goals <= 0) {
+        while (true) {
+          goals_int = 1;
+          if (Checkstring(goals)) {
+            goals_int = stoi(goals);
+            if (goals_int > 0 && goals_int <= 100) {
+              break;
+            }
+          }
           cin.clear();
           cin.ignore(numeric_limits<streamsize>::max(), '\n');  //忽略 streamsize 型別所能表示的最大值或到達換行符為止的所有字元
+          if (goals_int == 0 || goals_int > 100) cout << "\n### The number must be in [1,100] ###" << endl;
           cout << "\nNumber of G (goals): ";
           cin >> goals;
         }
-        Mission2(*maze, goals);
+        Mission2(*maze, goals_int);
       }
     } else if (command == "3") {
       if (maze == nullptr) {
@@ -583,10 +619,10 @@ int main() {
         Mission3(*maze);
       }
     } else if (command == "4") {
-      int number;
+      string filenumber;
       cout << "\nInput a file number: ";
-      cin >> number;
-      string filename = "input" + to_string(number) + ".txt";
+      cin >> filenumber;
+      string filename = "input" + filenumber + ".txt";
       if (maze_mission4 != nullptr) delete maze;
       maze_mission4 = new Maze(filename);
       Mission4(*maze_mission4);
