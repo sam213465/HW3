@@ -1,0 +1,291 @@
+// 11327207 呂強 & 11327209 鄭育昇
+#include <iostream>
+#include <fstream>
+#include <sstream>
+#include <string>
+#include <vector>
+#include <ctime>
+using namespace std;
+
+struct Node {
+  int oid;
+  int arrival;
+  int duration;
+  int timeout;
+  Node *next;
+};
+
+class Queue {
+ private:
+   Node * backptr {nullptr};
+   Node * frontptr {nullptr};
+   int size = 0;
+ public:
+  bool Isempty() {
+    if (backptr == nullptr) {
+      return true;
+    }
+    return false;
+  }
+
+  void Enqueue(int o, int a, int d, int t) {
+    Node *newptr = new Node;
+    newptr->oid = o;
+    newptr->arrival = a;
+    newptr->duration = d;
+    newptr->timeout = t;
+    newptr->next = nullptr;
+
+    if (Isempty()) {
+      frontptr = newptr;
+    } else {
+      backptr->next = newptr;
+    }
+    backptr = newptr;
+    size++;
+  }
+
+  void Dequeue() {
+    if (Isempty()) {
+      return;
+    }
+    Node *temp = frontptr;
+    if (frontptr == backptr) {
+      frontptr = nullptr;
+      backptr = nullptr;
+    } else {
+      frontptr = frontptr->next;
+    }
+    temp->next = nullptr;
+    delete temp;
+    size--;
+  }
+
+  int Getsize() {
+    return size;
+  }
+
+  void Getfront(int &o, int &a, int &d, int &t) {
+    if (Isempty()) {
+      return;
+    }
+    o = frontptr->oid;
+    a = frontptr->arrival;
+    d = frontptr->duration;
+    t = frontptr->timeout;
+  }
+};
+
+
+// 檢查字串是否全為數字
+bool Checkstring(string str) {
+  if (str.length() == 0) {
+    return false;
+  }
+  for (int i = 0; i < str.size(); i++) {
+    if (i == 0 && str[i] == '-') {
+      continue;
+    }
+    if (str[i] < '0' || str[i] > '9') {
+      return false;
+    }
+  }
+  return true;
+}
+class Data {
+ private:
+  int column = 0;
+  int row = 0;
+  vector<vector<string>> data;
+  vector<vector<int>> intdata;
+ public:
+  double Read(string filename) {
+    clock_t start, end;
+    start = clock();
+
+    ifstream fin(filename);
+    if (!fin.is_open()) {
+      cout << filename << " does not exist!\n";
+      return 0;
+    }
+
+    string line;
+
+    while (getline(fin, line)) {
+    if (line.empty()) continue; // 跳過空行
+
+    stringstream ss(line);
+    string value;
+    vector<string> row;
+    while (ss >> value) {
+      row.push_back(value);
+    }
+    data.push_back(row);
+  }
+    end = clock();
+    double time = double(end - start) / 1000;
+    fin.close();
+    return time;
+  }
+
+  void Print() {
+    for (int i = 0; i < data.size(); i++) {
+      for (int j = 0; j < data[i].size(); j++) {
+        if (i == 0) {
+          cout << "\t" << data[i][j] << "\t";
+        } else {
+          cout << data[i][j] << "\t";
+        }
+      }
+      cout << endl;
+      if (i+1 < data.size()) {
+        cout << "(" << i+1 << ")\t";
+      }
+    }
+  }
+
+  void Stringtoint() {
+    intdata.resize(data.size()-1);
+    for (int i = 1; i < data.size(); i++) {
+      intdata[i-1].resize(data[i].size());
+      for (int j = 0; j < data[i].size(); j++) {
+        intdata[i-1][j] = stoi(data[i][j]);
+      }
+    }
+  }
+
+  double shellSort() {
+    clock_t start, end;
+    start = clock();
+    int n = intdata.size();
+    for (int h = intdata.size()/2; h > 0; h = h/2) {
+      for (int unsorted = h; unsorted < n; ++unsorted) {
+        vector<int> temp = intdata[unsorted];
+        int j = unsorted;
+        while (j >= h && intdata[j - h][1] >= temp[1]) {
+          if (intdata[j-h][1] == temp[1]) {
+            if (intdata[j-h][0] > temp[0]) {
+              intdata[j] = intdata[j - h];
+            } else {
+              j -= h;
+              continue;
+            }
+          } else {
+            intdata[j] = intdata[j - h];   // 移動整行
+          }
+          j -= h;
+          intdata[j] = temp;
+        }
+      }
+    }
+    end = clock();
+    double time = double(end - start) / 1000;
+    return time;
+  }
+
+  double WriteFile(string filename) {
+    clock_t start, end;
+    start = clock();
+    ofstream fout(filename);
+
+    if (!fout.is_open()) {
+        cout << "Cannot open file!" << endl;
+        return 0;
+    }
+    fout << "OID\tArrival\tDuration\tTimeOut" << endl;
+    for (int i = 0; i < intdata.size(); i++) {
+        for (int j = 0; j < intdata[i].size(); j++) {
+            fout << intdata[i][j];
+            if (j != intdata[i].size() - 1) fout << "\t"; // 每個數字用空格隔開
+        }
+        fout << "\n"; // 換行
+    }
+    end = clock();
+    double time = double(end - start) / 1000;
+    fout.close();
+    return time;
+}
+
+  void Clean() {
+    data.clear();
+    intdata.clear();
+  }
+
+
+
+};
+
+
+
+int main() {
+  Data d;
+  while (1) {
+    cout << "*** (^_^) Data Structure (^o^) ***" << endl;
+    cout << "** Simulate FIFO Queues by SQF ***" << endl;
+    cout << "* 0. Quit                        *" << endl;
+    cout << "* 1. Sort a file                 *" << endl;
+    cout << "* 2. Simulate one FIFO queue     *" << endl;
+    cout << "* 3. Simulate two queues by SQF  *" << endl;
+    cout << "* 4. Simulate some queues by SQF *" << endl;
+    cout << "**********************************" << endl;
+    string command;
+    cout << "Input a command(0, 1, 2, 3, 4): ";
+    cin >> command;
+
+    if (command == "1") {
+      d.Clean();
+      string filenumber;
+      cout << "\nInput a file number (e.g., 401, 402, 403, ...): ";
+      cin >> filenumber;
+      cout << endl;
+      string filename = "input" + filenumber + ".txt";
+      double readtime = d.Read(filename);
+
+      d.Print();
+      cout << endl;
+
+      d.Stringtoint();
+      double sorttime = d.shellSort();
+
+      string sortfilename = "sorted" + filenumber + ".txt";
+      double writetime = d.WriteFile(sortfilename);
+
+      cout << "Reading data: " << readtime << " us" << endl;
+      cout << endl;
+      cout << "Sorting data: " << sorttime << " us" << endl;
+      cout << endl;
+      cout << "Writing data: " << writetime << " us" << endl;
+      cout << endl;
+    }/*** 
+    else if (command == "2") {
+      d.Clean();
+      string filenumber;
+      cout << "\nInput a file number (e.g., 401, 402, 403, ...): ";
+      cin >> filenumber;
+      cout << endl;
+      string filename = "sorted" + filenumber + ".txt";
+      d.Read(filename);
+      d.Print();
+      cout << endl;
+      string onefilename = "one" + filenumber + ".txt";
+      d.One(onefilename);
+    }
+    
+    else if (command == "3") {
+
+    } else if (command == "4") {
+     int number;
+      cout << "Input the number of queues:";
+      cin >> number;
+      cout << endl;
+    }
+      **/
+      else if (command == "0") {
+      break;
+    } else {
+      cout << "\nCommand does not exist!" << endl;
+      cout << endl;
+    }
+  }
+  return 0;
+}
