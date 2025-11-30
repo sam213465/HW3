@@ -129,17 +129,18 @@ class Data {
   }
 
   void Print() {
+    cout << "\t";
     for (int i = 0; i < data.size(); i++) {
       for (int j = 0; j < data[i].size(); j++) {
-        if (i == 0) {
-          cout << "\t" << data[i][j] << "\t";
-        } else {
-          cout << data[i][j] << "\t";
+          if (j <= 2) {
+            cout << data[i][j] << "\t";
+          } else {
+            cout << data[i][j];
+          }
         }
-      }
-      cout << endl;
+        cout << endl;
       if (i+1 < data.size()) {
-        cout << "(" << i+1 << ")\t";
+        cout << "(" << i+1 << ") \t";
       }
     }
   }
@@ -211,7 +212,123 @@ class Data {
     intdata.clear();
   }
 
+void One(string filename) {
+    Queue q;
+    ofstream fout(filename);
+    if (!fout.is_open()) {
+        cout << "Cannot open file!" << endl;
+        return;
+    }
+    int done = 0;
+    int n = intdata.size();
+    int index = 0;
+    int idleTime = 0;
+    vector<vector<int>> AbortList;
+    vector<vector<int>> TimeoutList;
 
+while (index < n || !q.Isempty()) {
+
+    if (q.Isempty() && index < n && idleTime < intdata[index][1])
+        idleTime = intdata[index][1];
+
+
+    while (index < n && intdata[index][1] < idleTime) {
+        int oid = intdata[index][0];
+        int arr = intdata[index][1];
+        int dur = intdata[index][2];
+        int tol = intdata[index][3];
+
+        if (q.Getsize() < 3) {
+            q.Enqueue(oid, arr, dur, tol);
+          cout << oid << " " << arr << " " << dur << " " << tol << "->inqueue" << endl;
+        } else {
+          cout << oid << " " << "0 0 " << arr << "-> abort" << endl;// queue 滿 → abort
+            AbortList.push_back({oid, 0, 0, arr});
+        }
+        index++;
+    }
+
+
+
+    if (q.Isempty()) {
+      if (index < n && intdata[index][1] == idleTime) {
+        int oid = intdata[index][0];
+        int arr = intdata[index][1];
+        int dur = intdata[index][2];
+        int tol = intdata[index][3];
+
+        cout << oid << " " << arr << " " << dur << " " << tol << "-> direct start (Q empty)" << endl;
+
+        int startTime = idleTime;
+        int finishTime = startTime + dur;
+
+        if (finishTime > tol) {
+            int delay = startTime - arr;
+            TimeoutList.push_back({oid, 1, delay, finishTime});
+        }
+
+        idleTime = finishTime;
+        index++;
+        continue;
+      } else {
+        continue;
+      }
+
+    }
+    int oid, arrival, duration, timeout;
+    q.Getfront(oid, arrival, duration, timeout);
+   cout << oid << " " << arrival << " " << duration << " " << timeout << "-> dequeue" << endl;
+    q.Dequeue();
+
+
+    if (timeout < idleTime) {
+        int abortTime = idleTime;
+        int delay = abortTime - arrival;
+        AbortList.push_back({oid, 1, delay, abortTime});
+        continue;
+    }
+
+
+    int startTime = idleTime;
+    int finishTime = startTime + duration;
+
+
+    if (finishTime > timeout) {
+        int delay = startTime - arrival;
+        TimeoutList.push_back({oid, 1, delay, finishTime});
+    }
+
+    idleTime = finishTime;
+    done++;
+
+}
+
+
+    fout << "\t[Abort List]\n";
+    fout << "\tOID\tCID\tDelay\tAbort\n";
+    int i = 1;
+    for (auto &v : AbortList) {
+        fout << "["<< i << "]\t" << v[0] << "\t" << v[1] << "\t" << v[2] << "\t" << v[3] << "\n";
+        i++;
+    }
+
+    fout << "\t[Timeout List]\n";
+    fout << "\tOID\tCID\tDelay\tDeparture\n";
+    i = 1;
+    for (auto &v : TimeoutList) {
+        fout << "["<< i << "]\t" << v[0] << "\t" << v[1] << "\t" << v[2] << "\t" << v[3] << "\n";
+        i++;
+    }
+
+
+    long long totalDelay = 0;
+    for (auto &v : AbortList) totalDelay += v[2];
+    for (auto &v : TimeoutList) totalDelay += v[2];
+
+    fout << "[Total Delay]\n" << totalDelay << " min.\n";
+    double failurePercentage = (double)(AbortList.size() + TimeoutList.size()) / n * 100.0;
+    fout << "[Failure Percentage]\n" << fixed << setprecision(2) << failurePercentage << "%" << "\n";
+}
 
 };
 
@@ -219,6 +336,8 @@ class Data {
 
 int main() {
   Data d;
+  string filenumber;
+  bool command2 = false;
   while (1) {
     cout << "*** (^_^) Data Structure (^o^) ***" << endl;
     cout << "** Simulate FIFO Queues by SQF ***" << endl;
@@ -234,7 +353,6 @@ int main() {
 
     if (command == "1") {
       d.Clean();
-      string filenumber;
       cout << "\nInput a file number (e.g., 401, 402, 403, ...): ";
       cin >> filenumber;
       cout << endl;
@@ -250,37 +368,54 @@ int main() {
       string sortfilename = "sorted" + filenumber + ".txt";
       double writetime = d.WriteFile(sortfilename);
 
-      cout << "Reading data: " << readtime << " us" << endl;
+      cout << "Reading data: " << readtime << " us." << endl;
       cout << endl;
-      cout << "Sorting data: " << sorttime << " us" << endl;
+      cout << "Sorting data: " << sorttime << " us." << endl;
       cout << endl;
-      cout << "Writing data: " << writetime << " us" << endl;
+      cout << "Writing data: " << writetime << " us." << endl;
       cout << endl;
-    }/*** 
-    else if (command == "2") {
+      command2 = false;
+    } else if (command == "2") {
       d.Clean();
-      string filenumber;
       cout << "\nInput a file number (e.g., 401, 402, 403, ...): ";
       cin >> filenumber;
       cout << endl;
       string filename = "sorted" + filenumber + ".txt";
       d.Read(filename);
+      d.Stringtoint();
       d.Print();
       cout << endl;
       string onefilename = "one" + filenumber + ".txt";
       d.One(onefilename);
-    }
-    
-    else if (command == "3") {
-
-    } else if (command == "4") {
-     int number;
-      cout << "Input the number of queues:";
-      cin >> number;
+      command2 = true;
+    } else if (command == "3") {
       cout << endl;
-    }
-      **/
-      else if (command == "0") {
+      if (command2) {
+        string onefilename = "two" + filenumber + ".txt";
+        d.Two(onefilename);
+      } else {
+        cout << "### Execute command 2 first! ###" << endl;
+        cout << endl;
+      }
+    } else if (command == "4") {
+      cout << endl;
+      if (command2) {
+        int number;
+        cout << "Input the number of queues: ";
+        cin >> number;
+        cout << endl;
+        if (number == 2) {
+          string onefilename = "two" + filenumber + ".txt";
+          d.Two(onefilename);
+        } else {
+          string anyfilename = "any" + filenumber + ".txt";
+          d.Multiple(number, anyfilename);
+        }
+      } else {
+        cout << "### Execute command 2 first! ###" << endl;
+        cout << endl;
+      }
+    } else if (command == "0") {
       break;
     } else {
       cout << "\nCommand does not exist!" << endl;
