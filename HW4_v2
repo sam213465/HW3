@@ -383,14 +383,16 @@ void Two(string filename) {
           }
           if (index >= n || intdata[index][1] >= idleTimeA) {
             qA.Dequeue();
-            long long startTime = arr;
+            long long startTime;
+            if (idleTimeA > arr) {
+              startTime = idleTimeA;
+            } else {
+             startTime = arr;
+             }
             long long finishTime = startTime + dur;
             if (startTime > idleTimeA) {
               totalIdleA += startTime - idleTimeA;
-            }
-            if (startTime > idleTimeA) {
-              totalIdleA += startTime - idleTimeA;
-            }
+             }
             idleTimeA = finishTime;
             if (finishTime > tol) {
               int delay = startTime - arr;
