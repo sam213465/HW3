@@ -97,16 +97,16 @@ class Data {
     }
     string line;
     while (getline(fin, line)) {
-    if (line.empty()) continue; // 跳過空行
+      if (line.empty()) continue; // 跳過空行
 
-    stringstream ss(line);
-    string value;
-    vector<string> row;
-    while (ss >> value) {
-      row.push_back(value);
-    }
-    data.push_back(row);
-  }
+      stringstream ss(line);
+      string value;
+      vector<string> row;
+      while (ss >> value) {
+        row.push_back(value);
+      }
+      data.push_back(row);
+     }
     end = clock();
     double time = double(end - start) * 1000;
     fin.close();
@@ -128,18 +128,17 @@ class Data {
       cout << "TimeOut\n";
     }
     for (int i = 1; i < data.size(); i++) {
-       if (i < data.size()) {
+      if (i < data.size()) {
         cout << "(" << i << ") \t";
       }
       for (int j = 0; j < data[i].size(); j++) {
-          if (j <= 2) {
-            cout << data[i][j] << "\t";
-          } else {
-            cout << data[i][j];
-          }
+        if (j <= 2) {
+          cout << data[i][j] << "\t";
+        } else {
+          cout << data[i][j];
         }
-        cout << endl;
-
+      }
+       cout << endl;
     }
   }
 
@@ -188,34 +187,34 @@ class Data {
     ofstream fout(filename);
 
     if (!fout.is_open()) {
-        cout << "Cannot open file!" << endl;
-        return 0;
+      cout << "Cannot open file!" << endl;
+      return 0;
     }
     fout << "OID\tArrival\tDuration\tTimeOut" << endl;
     for (int i = 0; i < intdata.size(); i++) {
-        for (int j = 0; j < intdata[i].size(); j++) {
-            fout << intdata[i][j];
-            if (j != intdata[i].size() - 1) fout << "\t"; // 每個數字用空格隔開
-        }
-        fout << "\n"; // 換行
+      for (int j = 0; j < intdata[i].size(); j++) {
+        fout << intdata[i][j];
+        if (j != intdata[i].size() - 1) fout << "\t"; // 每個數字用空格隔開
+      }
+      fout << "\n"; // 換行
     }
     end = clock();
     double time = double(end - start) * 1000;
     fout.close();
     return time;
-}
+  }
 
   void Clean() {
     data.clear();
     intdata.clear();
   }
 
-void One(string filename) {
+  void One(string filename) {
     Queue q;
     ofstream fout(filename);
     if (!fout.is_open()) {
-        cout << "Cannot open file!" << endl;
-        return;
+      cout << "Cannot open file!" << endl;
+      return;
     }
     int done = 0;
     int n = intdata.size();
@@ -224,97 +223,85 @@ void One(string filename) {
     vector<vector<int>> AbortList;
     vector<vector<int>> TimeoutList;
     int illegal = 0;
-while (index < n || !q.Isempty()) {
+    while (index < n || !q.Isempty()) {
 
-    if (q.Isempty() && index < n && idleTime < intdata[index][1])
+      if (q.Isempty() && index < n && idleTime < intdata[index][1]) 
         idleTime = intdata[index][1];
 
-
-    while (index < n && intdata[index][1] < idleTime) {
+      while (index < n && intdata[index][1] < idleTime) {
         int oid = intdata[index][0];
         int arr = intdata[index][1];
         int dur = intdata[index][2];
         int tol = intdata[index][3];
-        if (arr + dur > tol || dur <= 0) {
+        if (arr + dur > tol || dur <= 0) {  // 抵達時間+製作時間 > 逾時時間或製作時間 <= 0，視為不合法訂單
           index++;
           illegal++;
           continue;
         }
         if (q.Getsize() < 3) {
-            q.Enqueue(oid, arr, dur, tol);
-          //cout << oid << " " << arr << " " << dur << " " << tol << "->inqueue" << endl;
+          q.Enqueue(oid, arr, dur, tol);
         } else {
-         //cout << oid << " " << "0 0 " << arr << "-> abort" << endl;// queue 滿 → abort
-            AbortList.push_back({oid, 0, 0, arr});
+          AbortList.push_back({oid, 0, 0, arr}); // queue 滿 → abort
         }
         index++;
-    }
-
-
-
-    if (q.Isempty()) {
-      if (index < n && intdata[index][1] == idleTime) {
-        int oid = intdata[index][0];
-        int arr = intdata[index][1];
-        int dur = intdata[index][2];
-        int tol = intdata[index][3];
-
-        //cout << oid << " " << arr << " " << dur << " " << tol << "-> direct start (Q empty)" << endl;
-
-        int startTime = idleTime;
-        int finishTime = startTime + dur;
-
-        if (finishTime > tol) {
-            int delay = startTime - arr;
-            TimeoutList.push_back({oid, 1, delay, finishTime});
-        }
-
-        idleTime = finishTime;
-        index++;
-        continue;
-      } else {
-        continue;
       }
 
-    }
-    int oid, arrival, duration, timeout;
-    q.Getfront(oid, arrival, duration, timeout);
-   // cout << oid << " " << arrival << " " << duration << " " << timeout << "-> dequeue" << endl;
-    q.Dequeue();
+      if (q.Isempty()) {
+        if (index < n && intdata[index][1] == idleTime) {
+          int oid = intdata[index][0];
+          int arr = intdata[index][1];
+          int dur = intdata[index][2];
+          int tol = intdata[index][3];
+          //-> direct start (Q empty)
 
+          int startTime = idleTime;
+          int finishTime = startTime + dur;
 
-    if (timeout < idleTime) {
+          if (finishTime > tol) {
+            int delay = startTime - arr;
+            TimeoutList.push_back({oid, 1, delay, finishTime});
+          }
+
+          idleTime = finishTime;
+          index++;
+          continue;
+        } else {
+          continue;
+        }
+      }
+      int oid, arrival, duration, timeout;
+      q.Getfront(oid, arrival, duration, timeout);
+      q.Dequeue();
+
+      if (timeout < idleTime) {
         int abortTime = idleTime;
         int delay = abortTime - arrival;
         AbortList.push_back({oid, 1, delay, abortTime});
         continue;
-    }
+      }
 
+      int startTime = idleTime;
+      int finishTime = startTime + duration;
 
-    int startTime = idleTime;
-    int finishTime = startTime + duration;
-
-
-    if (finishTime > timeout) {
+      if (finishTime > timeout) {
         int delay = startTime - arrival;
         TimeoutList.push_back({oid, 1, delay, finishTime});
+      }
+
+      idleTime = finishTime;
+      done++;
     }
-
-    idleTime = finishTime;
-    done++;
-
-}
 
 
     fout << "\t[Abort List]\n";
     fout << "\tOID\tCID\tDelay\tAbort\n";
-   int i = 1;
-   for (int j = 0; j < AbortList.size(); j++) {
+    int i = 1;
+    for (int j = 0; j < AbortList.size(); j++) {
       fout << "[" << i << "]\t"
-         << AbortList[j][0] << "\t"
-         << AbortList[j][1] << "\t"
-         << AbortList[j][2] << "\t"
-         << AbortList[j][3] << "\n";
+           << AbortList[j][0] << "\t"
+           << AbortList[j][1] << "\t"
+           << AbortList[j][2] << "\t"
+           << AbortList[j][3] << "\n";
       i++;
     }
     fout << "\t[Timeout List]\n";
@@ -322,11 +309,11 @@ while (index < n || !q.Isempty()) {
     i = 1;
     for (int j = 0; j < TimeoutList.size(); j++) {
       fout << "[" << i << "]\t"
-         << TimeoutList[j][0] << "\t"
-         << TimeoutList[j][1] << "\t"
-         << TimeoutList[j][2] << "\t"
-         << TimeoutList[j][3] << "\n";
-    i++;
+           << TimeoutList[j][0] << "\t"
+           << TimeoutList[j][1] << "\t"
+           << TimeoutList[j][2] << "\t"
+           << TimeoutList[j][3] << "\n";
+      i++;
    }
 
 
@@ -344,7 +331,7 @@ while (index < n || !q.Isempty()) {
     fout << "[Failure Percentage]\n" << fixed << setprecision(2) << failurePercentage << " %" << "\n";
 }
 
-void Two(string filename) {
+  void Two(string filename) {
     Queue qA, qB;
     ofstream fout(filename);
     if (!fout.is_open()) {
@@ -363,187 +350,157 @@ void Two(string filename) {
     int doneA = 0, doneB = 0;
     int illegal = 0;
     while (index < n || !qA.Isempty() || !qB.Isempty()) {
-
-        // ------------------------
-        // 處理 Chef A 佇列 front
-        // ------------------------
-
-
-        while (!qA.Isempty() && (
-        (index < n && intdata[index][1] >= idleTimeA) ||
-        (index >= n && (idleTimeA <= idleTimeB || qB.Isempty())))){
-          int oid, arr, dur, tol;
-          qA.Getfront(oid, arr, dur, tol);
-          if (idleTimeA > tol) {
-            qA.Dequeue();
-            int delay = idleTimeA - arr;
-            AbortList.push_back({oid, 1, delay, idleTimeA});
-           //cout << "Chef 1 abort order " << oid << " due to timeout before start" << endl;
-            continue;
-          }
-          if (index >= n || intdata[index][1] >= idleTimeA) {
-            qA.Dequeue();
-            int startTime;
-            if (idleTimeA > arr) {
-              startTime = idleTimeA;
-            } else {
-             startTime = arr;
-             }
-            int finishTime = startTime + dur;
-            if (startTime > idleTimeA) {
-              totalIdleA += startTime - idleTimeA;
-             }
-            idleTimeA = finishTime;
-            if (finishTime > tol) {
-              int delay = startTime - arr;
-              TimeoutList.push_back({oid, 1, delay, (int)finishTime});
-              totalDelayA += delay;
-            } else {
-              totalDelayA += (startTime - arr);
-            }
-            doneA++;
-           //cout << "Chef 1 dequeued order " << oid
-               //  << " start=" << startTime << " finish=" << finishTime << endl;
+        // 處理 Chef A 佇列 
+      while (!qA.Isempty() && (
+            (index < n && intdata[index][1] >= idleTimeA) ||  // 有新訂單且新訂單的arrival >= 閒置時間
+            (index >= n && (idleTimeA <= idleTimeB || qB.Isempty())))){  // 沒有新訂單且A的閒置時間 <= B的閒置時間或者B佇列是空的
+        int oid, arr, dur, tol;
+        qA.Getfront(oid, arr, dur, tol);
+        if (idleTimeA > tol) {  // 閒置時間 > 逾時時間 -> 取消訂單
+          qA.Dequeue(); 
+          int delay = idleTimeA - arr;
+          AbortList.push_back({oid, 1, delay, idleTimeA});
+          continue;
+        }
+        if (index >= n || intdata[index][1] >= idleTimeA) {  // 沒有新訂單或新訂單的arrival >= 閒置時間
+          qA.Dequeue();
+          int startTime;
+          if (idleTimeA > arr) {  // 閒置時間 > 抵達時間
+            startTime = idleTimeA;  // 開始時間 = 閒置時間
           } else {
-            break;
+            startTime = arr;  // 開始時間 = 抵達時間
           }
-
+          int finishTime = startTime + dur;  
+          if (startTime > idleTimeA) {
+            totalIdleA += startTime - idleTimeA;
+          }
+          idleTimeA = finishTime;
+          if (finishTime > tol) {  // 結束時間 > 逾時時間 -> 放入逾時清單
+            int delay = startTime - arr;
+            TimeoutList.push_back({oid, 1, delay, (int)finishTime});
+            totalDelayA += delay;
+          } else {
+            totalDelayA += (startTime - arr);
+          }
+          doneA++;
+        } else {
+          break;
         }
-
-
-        // ------------------------
+      }
         // 處理 Chef B 佇列 front
-        // ------------------------
+    while (!qB.Isempty() && (
+          (index < n && intdata[index][1] >= idleTimeB) ||  // 有新訂單且新訂單的arrival >= 閒置時間
+          (index >= n && (idleTimeB < idleTimeA || qA.Isempty())))){  // 沒有新訂單且B的閒置時間 < A的閒置時間或者A佇列是空的
 
-       while (!qB.Isempty() && (
-        (index < n && intdata[index][1] >= idleTimeB) ||
-        (index >= n && (idleTimeB < idleTimeA || qA.Isempty())))){
-
-
-          int oid, arr, dur, tol;
-          qB.Getfront(oid, arr, dur, tol);
-          if (idleTimeB > tol) {
-            qB.Dequeue();
-            int delay = idleTimeB - arr;
-            AbortList.push_back({oid, 2, delay, idleTimeB});
-          // cout << "Chef 2 abort order " << oid << " due to timeout before start" << endl;
-            continue;
-          }
-          if (index >= n || intdata[index][1] >= idleTimeB) {
-            qB.Dequeue();
-            int startTime;
-            if (idleTimeB > arr) {
-              startTime = idleTimeB;
-            } else {
-             startTime = arr;
-             }
-             int finishTime = startTime + dur;
-            if (startTime > idleTimeB) {
-              totalIdleB += startTime - idleTimeB;
-             }
-            idleTimeB = finishTime;
-            if (finishTime > tol) {
-              int delay = startTime - arr;
-              TimeoutList.push_back({oid, 2, delay, (int)finishTime});
-              totalDelayB += delay;
-             } else {
-               totalDelayB += (startTime - arr);
-             }
-             doneB++;
-           // cout << "Chef 2 dequeued order " << oid
-              //   << " start=" << startTime << " finish=" << finishTime << endl;
-            } else {
-              break;
-            }
-
+      int oid, arr, dur, tol;
+      qB.Getfront(oid, arr, dur, tol);
+      if (idleTimeB > tol) {  // 閒置時間 > 逾時時間 -> 取消訂單
+        qB.Dequeue();
+        int delay = idleTimeB - arr;
+        AbortList.push_back({oid, 2, delay, idleTimeB});
+        continue;
+      }
+      if (index >= n || intdata[index][1] >= idleTimeB) {  // 沒有新訂單或新訂單的arrival >= 閒置時間
+        qB.Dequeue();
+        int startTime;
+        if (idleTimeB > arr) {  // 閒置時間 > 抵達時間
+          startTime = idleTimeB;  // 開始時間 = 閒置時間
+        } else {
+          startTime = arr;  // 開始時間 = 抵達時間
         }
-
-        // ------------------------
-        // 處理新訂單
-        // ------------------------
-        if (index < n) {
-            int oid = intdata[index][0];
-            int arr = intdata[index][1];
-            int dur = intdata[index][2];
-            int tol = intdata[index][3];
-
-            if (arr + dur > tol || dur <= 0) {
-             index++;
-             illegal++;
-             continue;
-            }
-
-            // 先找 idle 且空佇列
-            if (idleTimeA <= arr && qA.Isempty()) {
-                int startTime = arr;
-                int finishTime = startTime + dur;
-                if (startTime > idleTimeA) {
-                  totalIdleA += startTime - idleTimeA;
-                 }
-                idleTimeA = finishTime;
-                if (finishTime > tol) {
-                    int delay = startTime - arr;
-                    TimeoutList.push_back({oid, 1, delay, (int)finishTime});
-                    totalDelayA += delay;
-                } else totalDelayA += (startTime - arr);
-                doneA++;
-          //  cout << oid << " -> direct start (Chef 1)" << endl;
-            } else if (idleTimeB <= arr && qB.Isempty()) {
-                int startTime = arr;
-                int finishTime = startTime + dur;
-                if (startTime > idleTimeB) {
-                   totalIdleB += startTime - idleTimeB;
-                 }
-                idleTimeB = finishTime;
-                if (finishTime > tol) {
-                    int delay = startTime - arr;
-                    TimeoutList.push_back({oid, 2, delay, (int)finishTime});
-                    totalDelayB += delay;
-                } else totalDelayB += (startTime - arr);
-                doneB++;
-        // cout << oid << " -> direct start (Chef 2)" << endl;
-            } else {
-                // SQF: 最短佇列 (<3)
-                if (qA.Getsize() <= qB.Getsize() && qA.Getsize() < 3) {
-                    qA.Enqueue(oid, arr, dur, tol);
-                  // cout << oid << " -> inqueue (Chef 1)" << endl;
-                } else if (qB.Getsize() < 3) {
-                    qB.Enqueue(oid, arr, dur, tol);
-                // cout << oid << " -> inqueue (Chef 2)" << endl;
-                } else {
-                    AbortList.push_back({oid, 0, 0, arr});
-                 // cout << oid << " -> abort (all queues full)" << endl;
-                }
-            }
-
-            index++;
+        int finishTime = startTime + dur;
+        if (startTime > idleTimeB) {
+          totalIdleB += startTime - idleTimeB;
         }
+        idleTimeB = finishTime;
+        if (finishTime > tol) {  // 結束時間 > 逾時時間 -> 放入逾時清單
+        int delay = startTime - arr;
+        TimeoutList.push_back({oid, 2, delay, (int)finishTime});
+        totalDelayB += delay;
+        } else {
+           totalDelayB += (startTime - arr);
+        }
+        doneB++;
+      } else {
+        break;
+      }
     }
 
-    // ------------------------
+    // 處理新訂單
+    if (index < n) {
+      int oid = intdata[index][0];
+      int arr = intdata[index][1];
+      int dur = intdata[index][2];
+      int tol = intdata[index][3];
+
+      if (arr + dur > tol || dur <= 0) {  // 抵達時間+製作時間 > 逾時時間或製作時間 <= 0，視為不合法訂單
+        index++;
+        illegal++;
+        continue;
+      }
+
+      // 先找 idle 且空佇列
+      if (idleTimeA <= arr && qA.Isempty()) {
+        int startTime = arr;
+        int finishTime = startTime + dur;
+        if (startTime > idleTimeA) {
+          totalIdleA += startTime - idleTimeA;
+        }
+        idleTimeA = finishTime;
+        if (finishTime > tol) {
+          int delay = startTime - arr;
+          TimeoutList.push_back({oid, 1, delay, (int)finishTime});
+          totalDelayA += delay;
+        } else totalDelayA += (startTime - arr);
+          doneA++;  //-> direct start (Chef 1)
+      } else if (idleTimeB <= arr && qB.Isempty()) {
+        int startTime = arr;
+        int finishTime = startTime + dur;
+        if (startTime > idleTimeB) {
+          totalIdleB += startTime - idleTimeB;
+        }
+        idleTimeB = finishTime;
+        if (finishTime > tol) {
+          int delay = startTime - arr;
+          TimeoutList.push_back({oid, 2, delay, (int)finishTime});
+          totalDelayB += delay;
+        } else totalDelayB += (startTime - arr);
+          doneB++;  //-> direct start (Chef 2)
+      } else {
+        if (qA.Getsize() <= qB.Getsize() && qA.Getsize() < 3) {
+          qA.Enqueue(oid, arr, dur, tol);  // -> inqueue (Chef 1)
+        } else if (qB.Getsize() < 3) {
+          qB.Enqueue(oid, arr, dur, tol);  // -> inqueue (Chef 2)
+        } else {
+          AbortList.push_back({oid, 0, 0, arr});  // -> abort (佇列已滿)
+        }
+      }
+
+      index++;
+    }
+  }
     // 輸出結果
-    // ------------------------
     fout << "\t[Abort List]\n\tOID\tCID\tDelay\tAbort\n";
     int i = 1;
     for (int j = 0; j < AbortList.size(); j++) {
      fout << "[" << i << "]\t"
-         << AbortList[j][0] << "\t"
-         << AbortList[j][1] << "\t"
-         << AbortList[j][2] << "\t"
-         << AbortList[j][3] << "\n";
+          << AbortList[j][0] << "\t"
+          << AbortList[j][1] << "\t"
+          << AbortList[j][2] << "\t"
+          << AbortList[j][3] << "\n";
       i++;
     }
     i = 1;
     fout << "\t[Timeout List]\n\tOID\tCID\tDelay\tDeparture\n";
     for (int j = 0; j < TimeoutList.size(); j++) {
       fout << "[" << i << "]\t"
-         << TimeoutList[j][0] << "\t"
-         << TimeoutList[j][1] << "\t"
-         << TimeoutList[j][2] << "\t"
-         << TimeoutList[j][3] << "\n";
-    i++;
-   }
-    long long totalDelay = 0;
+          << TimeoutList[j][0] << "\t"
+          << TimeoutList[j][1] << "\t"
+          << TimeoutList[j][2] << "\t"
+          << TimeoutList[j][3] << "\n";
+      i++;
+    }
+    int totalDelay = 0;
     for (int i = 0; i < AbortList.size(); i++) {
       totalDelay += AbortList[i][2];
     }
@@ -555,12 +512,10 @@ void Two(string filename) {
 
     double failurePercentage = (double)(AbortList.size() + TimeoutList.size())/ (n-illegal) * 100.0;
     fout << "[Failure Percentage]\n" << fixed << setprecision(2) << failurePercentage << " %\n";
+  }
 
-}
 
-
- void Multiple(int numChefs, string filename) {
-
+  void Multiple(int numChefs, string filename) {
     vector<Queue> q(numChefs);                // 多個佇列
     vector<long long> idleTime(numChefs, 0);  // 多個閒置時間
 
@@ -589,140 +544,119 @@ void Two(string filename) {
         }
       }
 
-
-        // --------------------------
         // 先處理所有廚師的前端訂單
-        // --------------------------
-        for (int c = 0; c < numChefs; c++) {
+      for (int c = 0; c < numChefs; c++) {
+        while (!q[c].Isempty() && (index >= n || intdata[index][1] >= idleTime[c])) {
+          int oid, arr, dur, tol;
+          q[c].Getfront(oid, arr, dur, tol);
 
-            while (!q[c].Isempty() && (index >= n || intdata[index][1] >= idleTime[c])) {
-                int oid, arr, dur, tol;
-                q[c].Getfront(oid, arr, dur, tol);
+          // abort 檢查
+          if (idleTime[c] > tol) {
+            q[c].Dequeue();
+            int delay = idleTime[c] - arr;
+            AbortList.push_back({oid, c+1, delay, (int)idleTime[c]});
+            continue;
+          }
 
-                // abort 檢查
-                if (idleTime[c] > tol) {
-                    q[c].Dequeue();
-                    int delay = idleTime[c] - arr;
-                    AbortList.push_back({oid, c+1, delay, (int)idleTime[c]});
-                  //  cout << "Chef " << c+1 << " abort order " << oid << endl;
-                    continue;
-                }
+          // 如果還有新訂單，且新訂單的 arrival < idleTime → stop
+          if (index < n && intdata[index][1] < idleTime[c])
+            break;
 
-                // 如果還有新訂單，且新訂單的 arrival < idleTime → stop
-                if (index < n && intdata[index][1] < idleTime[c])
-                    break;
+          // 可以開始烹飪
+          q[c].Dequeue();
+          long long startTime;
+          if (idleTime[c] > arr) {
+            startTime = idleTime[c];
+          } else {
+            startTime = arr;
+          }
+          int finishTime = startTime + dur;
 
-                // 可以開始烹飪
-                q[c].Dequeue();
-                long long startTime;
-                if (idleTime[c] > arr) {
-                  startTime = idleTime[c];
-                } else {
-                  startTime = arr;
-                }
-                long long finishTime = startTime + dur;
+          if (startTime > idleTime[c]) {
+            totalIdle[c] += startTime - idleTime[c];
+          }
+          idleTime[c] = finishTime;
+          int delay = startTime - arr;
 
-                if (startTime > idleTime[c]) {
-                   totalIdle[c] += startTime - idleTime[c];
-                }
-                idleTime[c] = finishTime;
+          if (finishTime > tol)
+            TimeoutList.push_back({oid, c+1, delay, (int)finishTime});
 
-                int delay = startTime - arr;
+          totalDelay[c] += delay;
 
-                if (finishTime > tol)
-                    TimeoutList.push_back({oid, c+1, delay, (int)finishTime});
-
-                totalDelay[c] += delay;
-
-                done[c]++;
-
-               // cout << "Chef " << c+1 << " dequeued order " << oid
-                  //   << " start=" << startTime << " finish=" << finishTime << endl;
-            }
+          done[c]++;
         }
+      }
 
-        // --------------------------
         // 沒有新訂單就跳迴圈
-        // --------------------------
-        if (index >= n) continue;
+      if (index >= n) continue;
 
-        // --------------------------
         // 處理新訂單
-        // --------------------------
-        int oid = intdata[index][0];
-        int arr = intdata[index][1];
-        int dur = intdata[index][2];
-        int tol = intdata[index][3];
+      int oid = intdata[index][0];
+      int arr = intdata[index][1];
+      int dur = intdata[index][2];
+      int tol = intdata[index][3];
 
         // 1. 找 idle & empty
-        if (arr + dur > tol || dur <= 0) {
-          index++;
-          illegal++;
-          continue;
+      if (arr + dur > tol || dur <= 0) {
+        index++;
+        illegal++;
+        continue;
+      }
+      bool assigned = false;
+      for (int c = 0; c < numChefs; c++) {
+        if (idleTime[c] <= arr && q[c].Isempty()) {
+          int startTime = arr;
+          int finishTime = startTime + dur;
+
+          if (startTime > idleTime[c]){
+            totalIdle[c] += startTime - idleTime[c];
+          }
+          idleTime[c] = finishTime;
+
+          int delay = startTime - arr;
+          if (finishTime > tol)
+            TimeoutList.push_back({oid, c+1, delay, (int)finishTime});
+          totalDelay[c] += delay;
+          done[c]++;
+          assigned = true;
+          break;
         }
-        bool assigned = false;
-        for (int c = 0; c < numChefs; c++) {
-            if (idleTime[c] <= arr && q[c].Isempty()) {
-                long long startTime = arr;
-                long long finishTime = startTime + dur;
-
-               if (startTime > idleTime[c]){
-                 totalIdle[c] += startTime - idleTime[c];
-               }
-                idleTime[c] = finishTime;
-
-                int delay = startTime - arr;
-                if (finishTime > tol)
-                    TimeoutList.push_back({oid, c+1, delay, (int)finishTime});
-                totalDelay[c] += delay;
-
-                done[c]++;
-                assigned = true;
-
-               // cout << oid << " -> direct start (Chef " << c+1 << ")\n";
-                break;
-            }
-        }
+      }
 
         // 2. SQF：最短佇列 (<3)
-        if (!assigned) {
-            int bestChef = -1;
-            int bestSize = 10;
+      if (!assigned) {
+        int bestChef = -1;
+        int bestSize = 10;
 
-            for (int c = 0; c < numChefs; c++) {
-                if (q[c].Getsize() < 3 && q[c].Getsize() < bestSize) {
-                    bestSize = q[c].Getsize();
-                    bestChef = c;
-                }
-            }
-
-            if (bestChef != -1) {
-                q[bestChef].Enqueue(oid, arr, dur, tol);
-               // cout << oid << " -> inqueue (Chef " << bestChef+1 << ")\n";
-                assigned = true;
-            }
+        for (int c = 0; c < numChefs; c++) {
+          if (q[c].Getsize() < 3 && q[c].Getsize() < bestSize) {
+            bestSize = q[c].Getsize();
+            bestChef = c;
+          }
         }
+
+        if (bestChef != -1) {
+          q[bestChef].Enqueue(oid, arr, dur, tol);
+          assigned = true;
+        }
+      }
 
         // 3. 沒地方放 → abort
-        if (!assigned) {
-            AbortList.push_back({oid, 0, 0, arr});
-          // cout << oid << " -> abort (all queues full)\n";
-        }
+      if (!assigned) {
+        AbortList.push_back({oid, 0, 0, arr});
+      }
 
-        index++;
+      index++;
     }
-
-    // --------------------------
     // 輸出結果
-    // --------------------------
     fout << "\t[Abort List]\n\tOID\tCID\tDelay\tAbort\n";
     int i = 1;
     for (int j = 0; j < AbortList.size(); j++) {
       fout << "[" << i << "]\t"
-         << AbortList[j][0] << "\t"
-         << AbortList[j][1] << "\t"
-         << AbortList[j][2] << "\t"
-         << AbortList[j][3] << "\n";
+           << AbortList[j][0] << "\t"
+           << AbortList[j][1] << "\t"
+           << AbortList[j][2] << "\t"
+           << AbortList[j][3] << "\n";
       i++;
     }
 
@@ -730,12 +664,12 @@ void Two(string filename) {
     i = 1;
     for (int j = 0; j < TimeoutList.size(); j++) {
       fout << "[" << i << "]\t"
-         << TimeoutList[j][0] << "\t"
-         << TimeoutList[j][1] << "\t"
-         << TimeoutList[j][2] << "\t"
-         << TimeoutList[j][3] << "\n";
-    i++;
-   }
+           << TimeoutList[j][0] << "\t"
+           << TimeoutList[j][1] << "\t"
+           << TimeoutList[j][2] << "\t"
+           << TimeoutList[j][3] << "\n";
+      i++;
+    }
 
     int totalDelaySum = 0;
     for (int i = 0; i < AbortList.size(); i++) {
@@ -751,32 +685,11 @@ void Two(string filename) {
     double failurePercentage = (double)(AbortList.size() + TimeoutList.size()) / (n-illegal) * 100.0;
     fout << fixed << setprecision(2);
     fout << "[Failure Percentage]\n" << failurePercentage << " %\n";
-}
+  }
 
 };
 
 
-// 檢查字串是否全為數字
-bool Checkstring(string str) {
-  if (str.length() == 0) {
-    return false;
-  }
-  bool onlyminus = false;
-  for (int i = 0; i < str.size(); i++) {
-    if (i == 0 && str[i] == '-') {
-      onlyminus = true;
-      continue;
-    }
-    if (str[i] < '0' || str[i] > '9') {
-      return false;
-    }
-    onlyminus = false;
-  }
-  if (onlyminus) {
-    return false;
-  }
-  return true;
-}
 int main() {
   Data d;
   string filenumber;
@@ -851,9 +764,13 @@ int main() {
         cout << "Input the number of queues: ";
         cin >> number;
         cout << endl;
+        if (number == 1) {
+          string onefilename = "one" + filenumber + ".txt";
+          d.One(onefilename);
+        }
         if (number == 2) {
-          string onefilename = "two" + filenumber + ".txt";
-          d.Two(onefilename);
+          string twofilename = "two" + filenumber + ".txt";
+          d.Two(twofilename);
         } else {
           string anyfilename = "any" + filenumber + ".txt";
           d.Multiple(number, anyfilename);
