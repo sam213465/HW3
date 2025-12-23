@@ -16,23 +16,23 @@ drawJuliaSet:
     @ 抓取第 5 個參數 (frame buffer)
     @ 進入時在 [sp], 經過 stmfd (-16) 與 sub (-64) 後，現在在 [sp, #80]
     ldr      r0, [sp, #80]        
-    str      r0, [sp, #16]        @ frame pointer 存於 [sp, #16]
+    str      r0, [sp, #16]        @ frame pointer store [sp, #16]
 
     mov      r3, #255
-    str      r3, [sp, #20]        @ maxIter 存於 [sp, #20]
+    str      r3, [sp, #20]        @ maxIter store [sp, #20]
 
     mov      r3, #0
-    str      r3, [sp, #24]        @ x = 0 存於 [sp, #24]
+    str      r3, [sp, #24]        @ x = 0 store [sp, #24]
 
 .outer_x:
     ldr      r2, [sp, #24]        @ x
     ldr      r3, [sp, #8]         @ width
     cmp      r2, r3
-    moveq    r0, r0               @ 條件指令 (EQ 時執行)
+    moveq    r0, r0              
     bge      .end_outer_x
 
     mov      r3, #0
-    str      r3, [sp, #28]        @ y = 0 存於 [sp, #28]
+    str      r3, [sp, #28]        @ y = 0 store [sp, #28]
 
 .inner_y:
     ldr      r2, [sp, #28]        @ y
@@ -41,78 +41,78 @@ drawJuliaSet:
     bge      .end_inner_y
 
     @ === zx 計算 ===
-    ldr      r1, [sp, #8]       
+    ldr      r1, [sp, #8]         @ width
     mov      r1, r1, asr #1       @ r1 = width/2
     cmp      r1, #0
     moveq    r1, #1
     ldr      r2, [sp, #24]        @ x
-    sub      r0, r2, r1           
+    sub      r0, r2, r1           @ x - (width/2)
     ldr      r3, =1500
-    mul      r0, r3, r0
+    mul      r0, r3, r0           @ 1500 * x - (width/2)
     bl       __aeabi_idiv
-    str      r0, [sp, #32]        @ zx 存於 [sp, #32]
+    str      r0, [sp, #32]        @ zx store [sp, #32]
 
     @ === zy 計算 ===
-    ldr      r1, [sp, #12]
+    ldr      r1, [sp, #12]        @ height
     mov      r1, r1, asr #1       @ r1 = height/2
     cmp      r1, #0
     moveq    r1, #1
     ldr      r2, [sp, #28]        @ y
-    sub      r0, r2, r1           
+    sub      r0, r2, r1           @ y - (height/2)
     ldr      r3, =1000
-    mul      r0, r3, r0
+    mul      r0, r3, r0           @ 1000 * y - (height/2)
     bl       __aeabi_idiv
     str      r0, [sp, #36]        @ zy 存於 [sp, #36]
 
-    ldr      r3, [sp, #20]
+    ldr      r3, [sp, #20]        @ maxIter
     str      r3, [sp, #40]        @ i = maxIter 存於 [sp, #40]
 
 .while:
     ldr      r4, [sp, #32]        @ zx
     ldr      r5, [sp, #36]        @ zy
-    mul      r2, r4, r4
-    mul      r3, r5, r5
-    add      r2, r2, r3
+    mul      r2, r4, r4           @ zx * zx
+    mul      r3, r5, r5           @ zy * zy
+    add      r2, r2, r3           @ zx * zx + zy * zy
     ldr      r3, =4000000
     cmp      r2, r3
     bge      .end_while
-    ldr      r3, [sp, #40]
+    ldr      r3, [sp, #40]        @ i
     cmp      r3, #0
     ble      .end_while
 
-    mul      r0, r4, r4
-    mul      r1, r5, r5
-    sub      r0, r0, r1
+    mul      r0, r4, r4           @ zx * zx
+    mul      r1, r5, r5           @ zy * zy
+    sub      r0, r0, r1           @ zx * zx - zy * zy
     mov      r1, #1000
     bl       __aeabi_idiv
     ldr      r3, [sp, #0]         @ cX
-    add      r6, r0, r3           @ new_zx
-
-    mul      r0, r4, r5
-    mov      r0, r0, lsl #1
+    add      r6, r0, r3           @ tmp = r0 + r3
+ 
+    mul      r0, r4, r5           @ zx * zy
+    mov      r0, r0, lsl #1       @ zx * zy * 2
     mov      r1, #1000
     bl       __aeabi_idiv
     ldr      r3, [sp, #4]         @ cY
-    add      r5, r0, r3           @ new_zy
+    add      r5, r0, r3           @ zy
     
-    mov      r4, r6
+    mov      r4, r6               @ zx = tmp
     str      r4, [sp, #32]
     str      r5, [sp, #36]
 
-    ldr      r3, [sp, #40]
-    sub      r3, r3, #1
+    ldr      r3, [sp, #40]        @ i
+    sub      r3, r3, #1           @ i--
     str      r3, [sp, #40]
     b        .while
 
 .end_while:
-    ldr      r3, [sp, #40]
+    ldr      r3, [sp, #40]        @ i
     and      r3, r3, #0xFF
-    mov      r2, r3, lsl #8
+    mov      r2, r3, lsl #8       @ ((i&0xff)<<8)
     orr      r3, r2, r3
     mvn      r3, r3
     mov      r3, r3, lsl #16
     mov      r3, r3, lsr #16
-    strh     r3, [sp, #44]        @ color 存於 [sp, #44]
+    strh     r3, [sp, #44]        @ color store [sp, #44]
 
     ldr      r2, [sp, #28]        @ y
     ldr      r3, [sp, #8]         @ width
