@@ -88,28 +88,30 @@ private:
   }
 
   // 範圍搜尋 
-  void RangeSearch(BSTNode* node, int low, int high, vector<int>& result, int& visitCnt) {
+// 請在 BST class 裡面替換掉原本的 RangeSearch
+void RangeSearch(BSTNode* node, int low, int high, vector<int>& result, int& visitCnt) {
     if (node == nullptr) return;
 
+    // 只要進入一個非空節點，造訪次數就 +1
     visitCnt++;
 
-    // 若右子樹可能有答案
-    if (node->hp <= high) {
-      RangeSearch(node->right, low, high, result, visitCnt);
+    // 1. 若目前節點的 HP 大於 low，表示左子樹可能還有符合條件的資料
+    if (node->hp > low) {
+        RangeSearch(node->left, low, high, result, visitCnt);
     }
 
-    // 若目前節點在範圍內
+    // 2. 處理目前節點：若在範圍內，將該節點內的所有 ID 加入結果
     if (node->hp >= low && node->hp <= high) {
-      for (int i = 0; i < node->id.size(); ++i)
-        result.push_back(node->id[i]);
+        for (int i = 0; i < node->id.size(); ++i) {
+            result.push_back(node->id[i]);
+        }
     }
 
-    // 若左子樹可能有答案
-    if (node->hp >= low) {
-      RangeSearch(node->left, low, high, result, visitCnt);
+    // 3. 若目前節點的 HP 小於 high，表示右子樹可能還有符合條件的資料
+    if (node->hp < high) {
+        RangeSearch(node->right, low, high, result, visitCnt);
     }
-    return;
-  }
+}
 
   // 刪除最小值節點
   BSTNode *DeleteMin(BSTNode *node, int &deletedHP, vector<int> &deletedID)
