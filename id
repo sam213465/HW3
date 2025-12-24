@@ -1,0 +1,118 @@
+ .data
+
+idtitle: .asciz "*****Input ID*****\n"
+
+mem1: .asciz "** Please Enter Member 1 ID:**\n"
+
+mem2: .asciz "** Please Enter Member 2 ID:**\n"
+
+mem3: .asciz "** Please Enter Member 3 ID:**\n"
+
+com: .asciz "** Please Enter Command **\n"
+
+pid: .asciz "*****Print Team Member ID and ID Summation*****\n"
+
+idend: .asciz "*****End Print*****\n"
+
+intfmt: .asciz "%d"
+
+p_format:    .asciz  "%d\n"
+
+sum:    .asciz  "\nID Summation = %d\n"
+
+     .balign 4
+id1: .word 0
+id2: .word 0
+id3: .word 0
+idsum: .word 0
+
+
+
+ .text
+ .globl id
+ .globl  id1, id2, id3, idsum
+
+id:
+    stmfd sp!, {r4, lr}
+    mov r4, sp
+    ldr r0, =idtitle
+    bl printf
+
+    ldr r0, =mem1
+    rsbs    sp, lr, pc
+    mov sp, r4
+    bl printf
+
+    ldr r0, =intfmt
+    ldr r1, =id1
+    bl scanf
+
+    ldr r0, =mem2
+    bl printf
+
+    ldr r0, =intfmt
+    ldr r1, =id2
+    bl  scanf
+
+    ldr r0, =mem3
+    bl  printf
+
+    ldr r0, =intfmt
+    ldr r1, =id3
+    bl  scanf
+
+    ldr r0, =com
+    bl printf
+
+loop:
+    bl  getchar
+    cmp r0, #'p'
+    ldreq r0, =pid
+    bleq printf
+    bne loop
+
+    ldr r0, =p_format
+    ldr r1, =id1
+    ldr r1, [r1]
+    bl  printf
+
+    ldr r0, =p_format
+    ldr r1, =id2
+    ldr r1, [r1]
+    bl  printf
+
+    ldr r0, =p_format
+    ldr r1, =id3
+    ldr r1, [r1]
+    bl  printf
+
+    mov r3, #0
+    ldr r1, =id1
+    ldr r2, [r1]
+    cmp r2, #0
+    addgt r3, r3, r2
+
+    ldr r1, =id2
+    ldr r2, [r1]
+    cmp r2, #0
+    addgt r3, r3, r2
+
+    ldr r1, =id3
+    ldr r2, [r1]
+    cmp r2, #0
+    addgt r3, r3, r2
+
+    ldr r1, =idsum
+    str r3, [r1]
+    mov r1, r3
+
+    ldr r0, =sum
+    bl  printf
+
+    ldr r0, =idend
+    bl  printf
+
+    mov r0, #0
+    ldmfd sp!, {r4, lr}
+    mov pc, lr
+
