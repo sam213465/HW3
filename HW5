@@ -94,17 +94,16 @@ private:
 
     int visitCnt = 1; // 造訪目前節點
 
-    // 若目前節點在範圍內
-    if (node->hp >= low && node->hp <= high) {
-      for (int i = 0; i < node->id.size(); ++i)
-        result.push_back(node->id[i]);
-    }
-
     // 若右子樹可能有答案
     if (node->hp < high) {
       visitCnt += RangeSearch(node->right, low, high, result);
     }
     
+    // 若目前節點在範圍內
+    if (node->hp >= low && node->hp <= high) {
+      for (int i = 0; i < node->id.size(); ++i)
+        result.push_back(node->id[i]);
+    }
 
     // 若左子樹可能有答案
     if (node->hp > low) {
@@ -354,11 +353,6 @@ void mission1(vector<Pokemon> &pokemonData, BST &bst)
   return;
 }
 
-// 比較兩個Pokemon的HP（用於排序）
-bool compareHPs(Pokemon a, Pokemon b) {
-  return a.hp > b.hp;
-}
-
 void mission2(vector<Pokemon> &pokemonData, BST &bst)
 {
   string input;
@@ -426,22 +420,10 @@ void mission2(vector<Pokemon> &pokemonData, BST &bst)
     return;
   }
 
-  vector<Pokemon> tempPokemons;
-  for (int i = 0; i < result_ids.size(); ++i) {
-    for (int j = 0; j < pokemonData.size(); ++j) {
-      if (pokemonData[j].id == result_ids[i]) {
-        tempPokemons.push_back(pokemonData[j]);
-        break;
-      }
-    }
-  }
-
-  stable_sort(tempPokemons.begin(), tempPokemons.end(), compareHPs);
-
   cout << "\t#\tName               \tType 1    \tTotal\tHP\tAttack\tDefense" << endl;
-  for (int k = 0; k < tempPokemons.size(); ++k)
+  for (int k = 0; k < result_ids.size(); ++k)
   {
-    int targetID = tempPokemons[k].id;
+    int targetID = result_ids[k];
 
     for (int i = 0; i < pokemonData.size(); ++i)
     {
