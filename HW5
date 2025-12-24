@@ -4,11 +4,8 @@
 #include <sstream>
 #include <string>
 #include <vector>
-#include <ctime>
 #include <iomanip>
-#include <functional>
 #include <queue>
-#include <algorithm>
 using namespace std;
 
 // Pokemon資料
@@ -45,6 +42,7 @@ struct DataNode
   vector<int> id;
 };
 
+// 二元搜尋樹類別
 class BST
 {
 private:
@@ -95,18 +93,21 @@ private:
     int visitCnt = 1; // 造訪目前節點
 
     // 若右子樹可能有答案
-    if (node->hp < high) {
+    if (node->hp < high) 
+    {
       visitCnt += RangeSearch(node->right, low, high, result);
     }
     
     // 若目前節點在範圍內
-    if (node->hp >= low && node->hp <= high) {
+    if (node->hp >= low && node->hp <= high) 
+    {
       for (int i = 0; i < node->id.size(); ++i)
         result.push_back(node->id[i]);
     }
 
     // 若左子樹可能有答案
-    if (node->hp > low) {
+    if (node->hp > low) 
+    {
       visitCnt += RangeSearch(node->left, low, high, result);
     }
     return visitCnt;
@@ -145,7 +146,7 @@ private:
   // 中序走訪
   void Inorder(BSTNode *node, vector<DataNode> &arr)
   {
-    if (node == nullptr)
+    if (node == nullptr) 
       return;
     Inorder(node->left, arr);
     arr.push_back({node->hp, node->id});
@@ -158,6 +159,7 @@ private:
     if (l > r)
       return nullptr;
 
+    // 取目前區間的中間位置作為根節點
     int mid = (l + r) / 2;
 
     BSTNode *node = new BSTNode();
@@ -196,30 +198,38 @@ public:
   int GetHighestHP()
   {
     BSTNode *current = root;
-    if (current == nullptr) {
+    if (current == nullptr) 
+    {
       return -1; // 樹是空的
     }
-    while (current->right != nullptr) {
+
+    while (current->right != nullptr) 
+    {
       current = current->right;
     }
+
     return current->hp;
   }
 
-  vector<int> SearchBSTRange(int low, int high, int &visitCnt) {
+  vector<int> SearchBSTRange(int low, int high, int &visitCnt) 
+  {
     vector<int> result;
     visitCnt = RangeSearch(root, low, high, result);
     return result;
   }
 
-  void DeleteMin(int &deletedHP, vector<int> &deletedID){
+  void DeleteMin(int &deletedHP, vector<int> &deletedID)
+  {
     root = DeleteMin(root, deletedHP, deletedID);
   }
 
-  void DeleteMax(int &deletedHP, vector<int> &deletedID) {
+  void DeleteMax(int &deletedHP, vector<int> &deletedID) 
+  {
     root = DeleteMax(root, deletedHP, deletedID);
   }
 
-  void RebuildBalanced() {
+  void RebuildBalanced() 
+  {
     vector<DataNode> arr;
     Inorder(root, arr); // step 1
 
@@ -229,7 +239,10 @@ public:
     root = BuildBalanced(arr, 0, arr.size() - 1); // step 2
   }
 
-  void PrintLevelOrder() {
+  // 印出層序遍歷
+  void PrintLevelOrder() 
+  {
+    // 若樹為空，直接結束
     if (root == nullptr) return;
 
     queue<BSTNode*> q;
@@ -239,50 +252,63 @@ public:
 
     cout << "\nHP tree:" << endl;
 
-    while (!q.empty()) {
-
-      int levelSize = q.size();   // 目前這一層的節點數
+    // 當還有節點尚未處理
+    while (!q.empty()) 
+    {
+      // 目前層的節點數
+      int levelSize = q.size();
       cout << "<level " << level << "> ";
 
-      for (int i = 0; i < levelSize; ++i) {
+      // 處理同一層的所有節點
+      for (int i = 0; i < levelSize; ++i) 
+      {
         BSTNode* cur = q.front();
         q.pop();
 
         // 印 (hp, id|id|id)
         cout << "(" << cur->hp << ", ";
-        for (int j = 0; j < cur->id.size(); ++j) {
+        for (int j = 0; j < cur->id.size(); ++j) 
+        {
           cout << cur->id[j];
           if (j != cur->id.size() - 1) cout << "|";
         }
         cout << ")";
+        // 同層節點之間空一格
         if (i != levelSize - 1) cout << " ";
 
+        // 將下一層節點加入 queue
         if (cur->left != nullptr) q.push(cur->left);
         if (cur->right != nullptr) q.push(cur->right);
       }
 
       cout << endl;
-      level++;
+      level++;  // 進入下一層
     }
   }
 };
 
 // 讀取Pokemon資料
-void ReadPokemonData(ifstream &fin, vector<Pokemon> &pokemonData) {
-
+void ReadPokemonData(ifstream &fin, vector<Pokemon> &pokemonData) 
+{
   string line;
 
-  while (getline(fin, line)) {
-    stringstream ss(line);
-    Pokemon p;
-    string field;
+  // 逐行讀取檔案
+  while (getline(fin, line)) 
+  {
+    stringstream ss(line);  // 用來解析一行資料
+    Pokemon p;              // 暫存一筆 Pokemon
+    string field;           // 暫存數值欄位字串
 
+    // 讀取 ID
     getline(ss, field, '\t');
     p.id = stoi(field);
+
+    // 讀取名稱與屬性
     getline(ss, p.name, '\t');
     getline(ss, p.type1, '\t');
     getline(ss, p.type2, '\t');
 
+    // 讀取各項數值屬性
     getline(ss, field, '\t');
     p.total = stoi(field);
     getline(ss, field, '\t');
@@ -302,6 +328,7 @@ void ReadPokemonData(ifstream &fin, vector<Pokemon> &pokemonData) {
     getline(ss, field, '\t');
     p.legendary = (field == "True");
 
+    // 存入 vector
     pokemonData.push_back(p);
 
     cin.clear();
@@ -311,7 +338,6 @@ void ReadPokemonData(ifstream &fin, vector<Pokemon> &pokemonData) {
 // 檢查字串是否全為數字
 bool Checkstring(string str)
 {
-
   if (str.length() == 0)
   {
     return false;
@@ -331,7 +357,7 @@ bool Checkstring(string str)
 
 void mission1(vector<Pokemon> &pokemonData, BST &bst)
 {
-
+  // 建立BST
   for (int i = 0; i < pokemonData.size(); ++i)
   {
     bst.Insert(pokemonData[i].hp, pokemonData[i].id);
@@ -347,8 +373,8 @@ void mission1(vector<Pokemon> &pokemonData, BST &bst)
          << "\t" << setw(6) << pokemonData[i].hp << endl;
   }
 
-  cout << "HP tree height = " << bst.GetHeight() << endl
-       << endl;
+  // 印出樹高
+  cout << "HP tree height = " << bst.GetHeight() << endl << endl;
 
   return;
 }
@@ -357,7 +383,7 @@ void mission2(vector<Pokemon> &pokemonData, BST &bst)
 {
   string input;
   int low, high, visited_count = 0;
-  int highestHP = bst.GetHighestHP();
+  int highestHP = bst.GetHighestHP(); // 取得 BST 中最大的 HP，用來限制輸入範圍
 
   // 輸入區間low與high
   do
@@ -410,8 +436,10 @@ void mission2(vector<Pokemon> &pokemonData, BST &bst)
     high = temp;
   }
 
+  // 在 BST 中進行 range search
   vector<int> result_ids = bst.SearchBSTRange(low, high, visited_count);
 
+  // 若沒有任何結果
   if (result_ids.empty())
   {
     cout << "No record was found in the specified range.\n";
@@ -420,11 +448,13 @@ void mission2(vector<Pokemon> &pokemonData, BST &bst)
     return;
   }
 
+  // 印出結果
   cout << "\t#\tName               \tType 1    \tTotal\tHP\tAttack\tDefense" << endl;
   for (int k = 0; k < result_ids.size(); ++k)
   {
     int targetID = result_ids[k];
 
+    // 從 pokemonData 中找對應的 Pokemon 資料並印出
     for (int i = 0; i < pokemonData.size(); ++i)
     {
       if (pokemonData[i].id == targetID)
@@ -443,15 +473,17 @@ void mission2(vector<Pokemon> &pokemonData, BST &bst)
     }
   }
 
+  // 印出拜訪節點數
   cout << "Number of visited nodes = " << visited_count << endl << endl;
   return;
 }
 
 void mission3(vector<Pokemon> &pokemonData, BST &bst, bool &deletedmax)
 {
-  vector<int> deletedID;
+  vector<int> deletedID; // 儲存被刪除的 Pokemon id
   int deletedHP = -1;
 
+  // 決定要刪最小或最大 HP
   if (!deletedmax)
   {
     bst.DeleteMin(deletedHP, deletedID);
@@ -460,8 +492,9 @@ void mission3(vector<Pokemon> &pokemonData, BST &bst, bool &deletedmax)
   {
     bst.DeleteMax(deletedHP, deletedID);
   }
-  deletedmax = !deletedmax;
+  deletedmax = !deletedmax; // 切換狀態，下次刪另一邊
 
+   // 印出被刪除的 Pokemon
   cout << "\n\t#\tName               \tType 1    \tTotal\tHP\tAttack\tDefense\tSp. Atk\tSp. Def" << endl;
   int cnt = 0;
   for (int i = 0; i < pokemonData.size(); ++i)
@@ -492,7 +525,7 @@ void mission3(vector<Pokemon> &pokemonData, BST &bst, bool &deletedmax)
   {
     if (it->hp == deletedHP)
     {
-      it = pokemonData.erase(it);
+      it = pokemonData.erase(it); // erase 會回傳下一個 iterator
     }
     else
     {
@@ -500,19 +533,18 @@ void mission3(vector<Pokemon> &pokemonData, BST &bst, bool &deletedmax)
     }
   }
 
-  cout << "HP tree height = " << bst.GetHeight() << endl
-       << endl;
+  // 印出刪除後的樹高
+  cout << "HP tree height = " << bst.GetHeight() << endl << endl;
   return;
 }
 
 
 int main()
 {
-
-  vector<Pokemon> pokemonData;
-  BST bst;
-  string filenumber;
-  bool deletedmax = false;
+  vector<Pokemon> pokemonData;  // 儲存所有 Pokemon 的動態陣列
+  BST bst;                      // 二元搜尋樹
+  string filenumber;            // 檔案名稱
+  bool deletedmax = false;      // 用來交替刪除最大或最小值
 
   while (1)
   {
@@ -530,12 +562,13 @@ int main()
     cout << "Input a choice(0, 1, 2, 3, 4): ";
     cin >> command;
 
+    
     if (command == "1")
     {
-
-      pokemonData.clear();
-      deletedmax = false;
-      bst = BST();
+      // Mission 1
+      pokemonData.clear();  // 清空舊資料
+      deletedmax = false;   // 重置刪除方向
+      bst = BST();          // 重置 BST
       ifstream fin;
 
       cout << endl;
@@ -564,7 +597,7 @@ int main()
     }
     else if (command == "2")
     {
-
+      // Mission 2
       cout << endl;
       if (pokemonData.size() == 0)
       {
@@ -577,7 +610,7 @@ int main()
     }
     else if (command == "3")
     {
-
+      // Mission 3
       if (pokemonData.size() == 0)
       {
         cout << "\n----- Execute Mission 1 first! -----\n"
@@ -589,7 +622,8 @@ int main()
     }
     else if (command == "4")
     {
-      deletedmax = false;
+      // Mission 4
+      deletedmax = false;  // 重建後重新從最小刪除
 
       if (pokemonData.size() == 0)
       {
