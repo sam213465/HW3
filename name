@@ -1,0 +1,36 @@
+ .data
+
+ntitle: .asciz "*****Print Name*****\n"
+  .balign 4
+team: .asciz "Team 04\n"
+  .balign 4
+member1: .asciz "John Lu\n"
+  .balign 4
+member2: .asciz "Yusheng Cheng\n"
+  .balign 4
+member3: .asciz "Yusheng Cheng\n"
+
+nend: .asciz "*****End Print*****\n"
+
+ .text
+ .globl name
+ .globl  team, member1, member2, member3
+
+name:
+ stmfd sp!,{lr}
+ ldr r0, =ntitle
+ bl printf
+ ldr r0, =team
+ bl printf
+ ldr r0, =member1
+ bl printf
+ ldr r0, =member2
+ bl printf
+ ldr r0, =member3
+ bl printf
+ ldr r0, =nend
+ bl printf
+ mov r0, #0
+ ldmfd sp!,{lr}
+ mov pc, lr
+
