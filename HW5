@@ -1,0 +1,617 @@
+// 11327207 呂強 & 11327209 鄭育昇
+#include <iostream>
+#include <fstream>
+#include <sstream>
+#include <string>
+#include <vector>
+#include <ctime>
+#include <iomanip>
+#include <functional>
+#include <queue>
+using namespace std;
+
+// Pokemon資料
+struct Pokemon
+{
+  int id;
+  string name;
+  string type1;
+  string type2;
+  int total;
+  int hp;
+  int attack;
+  int defense;
+  int spAtk;
+  int spDef;
+  int speed;
+  int generation;
+  bool legendary;
+};
+
+// 二元搜尋樹節點
+struct BSTNode
+{
+  int hp;
+  vector<int> id;
+  BSTNode *left;
+  BSTNode *right;
+};
+
+// 用於範圍搜尋結果的資料
+struct DataNode
+{
+  int hp;
+  vector<int> id;
+};
+
+class BST
+{
+private:
+  BSTNode *root;      // 樹根
+  vector<int> result; // 範圍搜尋結果
+
+  // 插入節點
+  BSTNode *Insert(BSTNode *node, int hp, int id)
+  {
+    if (node == nullptr)
+    {
+      BSTNode *newNode = new BSTNode();
+      newNode->hp = hp;
+      newNode->id.push_back(id);
+      newNode->left = nullptr;
+      newNode->right = nullptr;
+      return newNode;
+    }
+    if (hp < node->hp)
+    {
+      node->left = Insert(node->left, hp, id);
+    }
+    else if (hp > node->hp)
+    {
+      node->right = Insert(node->right, hp, id);
+    }
+    else
+    {
+      node->id.push_back(id);
+    }
+    return node;
+  }
+
+  // 計算樹高
+  int Height(BSTNode *node)
+  {
+    if (node == nullptr)
+      return 0;
+    int leftHeight = Height(node->left);
+    int rightHeight = Height(node->right);
+    return max(leftHeight, rightHeight) + 1;
+  }
+
+  // 範圍搜尋 
+  void RangeSearch(BSTNode* node, int low, int high, vector<int>& result, int& visitCnt) {
+    if (node == nullptr) return;
+
+    visitCnt++;
+
+    // 若右子樹可能有答案
+    if (node->hp <= high) {
+      RangeSearch(node->right, low, high, result, visitCnt);
+    }
+
+    // 若目前節點在範圍內
+    if (node->hp >= low && node->hp <= high) {
+      for (int i = 0; i < node->id.size(); ++i)
+        result.push_back(node->id[i]);
+    }
+
+    // 若左子樹可能有答案
+    if (node->hp >= low) {
+      RangeSearch(node->left, low, high, result, visitCnt);
+    }
+    return;
+  }
+
+  // 刪除最小值節點
+  BSTNode *DeleteMin(BSTNode *node, int &deletedHP, vector<int> &deletedID)
+  {
+    if (node->left == nullptr)
+    {
+      deletedHP = node->hp;
+      deletedID = node->id;
+      BSTNode *rightChild = node->right;
+      delete node;
+      return rightChild;
+    }
+    node->left = DeleteMin(node->left, deletedHP, deletedID);
+    return node;
+  }
+
+  // 刪除最大值節點
+  BSTNode *DeleteMax(BSTNode *node, int &deletedHP, vector<int> &deletedID)
+  {
+    if (node->right == nullptr)
+    {
+      deletedHP = node->hp;
+      deletedID = node->id;
+      BSTNode *leftChild = node->left;
+      delete node;
+      return leftChild;
+    }
+    node->right = DeleteMax(node->right, deletedHP, deletedID);
+    return node;
+  }
+
+  // 中序走訪
+  void Inorder(BSTNode *node, vector<DataNode> &arr)
+  {
+    if (node == nullptr)
+      return;
+    Inorder(node->left, arr);
+    arr.push_back({node->hp, node->id});
+    Inorder(node->right, arr);
+  }
+
+  // 重建平衡二元搜尋樹
+  BSTNode *BuildBalanced(const vector<DataNode> &arr, int l, int r)
+  {
+    if (l > r)
+      return nullptr;
+
+    int mid = (l + r) / 2;
+
+    BSTNode *node = new BSTNode();
+    node->hp = arr[mid].hp;
+    node->id = arr[mid].id;
+
+    node->left = BuildBalanced(arr, l, mid - 1);
+    node->right = BuildBalanced(arr, mid + 1, r);
+
+    return node;
+  }
+
+  // 清除樹
+  void Clear(BSTNode *node)
+  {
+    if (node == nullptr)
+      return;
+    Clear(node->left);
+    Clear(node->right);
+    delete node;
+  }
+
+public:
+  BST() : root(nullptr) {}
+
+  void Insert(int hp, int id)
+  {
+    root = Insert(root, hp, id);
+  }
+
+  int GetHeight()
+  {
+    return Height(root);
+  }
+
+  int GetHighestHP()
+  {
+    BSTNode *current = root;
+    if (current == nullptr) {
+      return -1; // 樹是空的
+    }
+    while (current->right != nullptr) {
+      current = current->right;
+    }
+    return current->hp;
+  }
+
+  vector<int> SearchBSTRange(int low, int high, int &visitCnt) {
+    vector<int> result;
+    RangeSearch(root, low, high, result, visitCnt);
+    return result;
+  }
+
+  void DeleteMin(int &deletedHP, vector<int> &deletedID){
+    root = DeleteMin(root, deletedHP, deletedID);
+  }
+
+  void DeleteMax(int &deletedHP, vector<int> &deletedID) {
+    root = DeleteMax(root, deletedHP, deletedID);
+  }
+
+  void RebuildBalanced() {
+    vector<DataNode> arr;
+    Inorder(root, arr); // step 1
+
+    Clear(root); // 清掉舊樹
+    root = nullptr;
+
+    root = BuildBalanced(arr, 0, arr.size() - 1); // step 2
+  }
+
+  void PrintLevelOrder() {
+    if (root == nullptr) return;
+
+    queue<BSTNode*> q;
+    q.push(root);
+
+    int level = 1;
+
+    cout << "\nHP tree:" << endl;
+
+    while (!q.empty()) {
+
+      int levelSize = q.size();   // 目前這一層的節點數
+      cout << "<level " << level << "> ";
+
+      for (int i = 0; i < levelSize; ++i) {
+        BSTNode* cur = q.front();
+        q.pop();
+
+        // 印 (hp, id|id|id)
+        cout << "(" << cur->hp << ", ";
+        for (int j = 0; j < cur->id.size(); ++j) {
+          cout << cur->id[j];
+          if (j != cur->id.size() - 1) cout << "|";
+        }
+        cout << ")";
+        if (i != levelSize - 1) cout << " ";
+
+        if (cur->left != nullptr) q.push(cur->left);
+        if (cur->right != nullptr) q.push(cur->right);
+      }
+
+      cout << endl;
+      level++;
+    }
+  }
+};
+
+// 讀取Pokemon資料
+void ReadPokemonData(ifstream &fin, vector<Pokemon> &pokemonData) {
+
+  string line;
+
+  while (getline(fin, line)) {
+    stringstream ss(line);
+    Pokemon p;
+    string field;
+
+    getline(ss, field, '\t');
+    p.id = stoi(field);
+    getline(ss, p.name, '\t');
+    getline(ss, p.type1, '\t');
+    getline(ss, p.type2, '\t');
+
+    getline(ss, field, '\t');
+    p.total = stoi(field);
+    getline(ss, field, '\t');
+    p.hp = stoi(field);
+    getline(ss, field, '\t');
+    p.attack = stoi(field);
+    getline(ss, field, '\t');
+    p.defense = stoi(field);
+    getline(ss, field, '\t');
+    p.spAtk = stoi(field);
+    getline(ss, field, '\t');
+    p.spDef = stoi(field);
+    getline(ss, field, '\t');
+    p.speed = stoi(field);
+    getline(ss, field, '\t');
+    p.generation = stoi(field);
+    getline(ss, field, '\t');
+    p.legendary = (field == "True");
+
+    pokemonData.push_back(p);
+
+    cin.clear();
+  }
+}
+
+// 檢查字串是否全為數字
+bool Checkstring(string str)
+{
+
+  if (str.length() == 0)
+  {
+    return false;
+  }
+
+  for (int i = 0; i < str.size(); i++)
+  {
+
+    if (str[i] < '0' || str[i] > '9')
+    {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+void mission1(vector<Pokemon> &pokemonData, BST &bst)
+{
+
+  for (int i = 0; i < pokemonData.size(); ++i)
+  {
+    bst.Insert(pokemonData[i].hp, pokemonData[i].id);
+  }
+
+  // 印出讀入資料
+  cout << "\t#\tName               \tType 1    \tHP" << endl;
+  for (int i = 0; i < pokemonData.size(); ++i)
+  {
+    cout << right << "[" << setw(3) << i + 1 << "]\t" << pokemonData[i].id
+         << "\t" << left << setw(20) << pokemonData[i].name
+         << "\t" << setw(10) << pokemonData[i].type1
+         << "\t" << setw(6) << pokemonData[i].hp << endl;
+  }
+
+  cout << "HP tree height = " << bst.GetHeight() << endl
+       << endl;
+
+  return;
+}
+
+void mission2(vector<Pokemon> &pokemonData, BST &bst)
+{
+  string input;
+  int low, high, visited_count = 0;
+  int highestHP = bst.GetHighestHP();
+
+  // 輸入區間low與high
+  do
+  {
+    cout << "Input a non-negative integer: ";
+    cin >> input;
+
+    if (!Checkstring(input))
+    {
+      cout << "\n### It is NOT a non-negative integer. ###" << endl;
+      cout << "Try again:" << endl;
+      continue;
+    }
+    low = stoi(input);
+    if (low > highestHP * 2)
+    {
+      cout << "\n### It is NOT in [0," << highestHP * 2 << "]. ###" << endl;
+      cout << "Try again:" << endl;
+      continue;
+    }
+    break;
+  } while (true);
+  cout << endl;
+
+  do
+  {
+    cout << "Input a non-negative integer: ";
+    cin >> input;
+    if (!Checkstring(input))
+    {
+      cout << "\n### It is NOT a non-negative integer. ###" << endl;
+      cout << "Try again:" << endl;
+      continue;
+    }
+    high = stoi(input);
+    if (high > highestHP * 2)
+    {
+      cout << "\n### It is NOT in [0," << highestHP * 2 << "]. ###" << endl;
+      cout << "Try again:" << endl;
+      continue;
+    }
+    break;
+  } while (true);
+
+  // 保證 low <= high
+  if (low > high)
+  {
+    int temp = low;
+    low = high;
+    high = temp;
+  }
+
+  vector<int> result_ids = bst.SearchBSTRange(low, high, visited_count);
+
+  if (result_ids.empty())
+  {
+    cout << "No record was found in the specified range.\n";
+    cout << "Number of visited nodes = " << visited_count << endl
+         << endl;
+    return;
+  }
+
+  cout << "\t#\tName               \tType 1    \tTotal\tHP\tAttack\tDefense" << endl;
+  for (int k = 0; k < result_ids.size(); ++k)
+  {
+    int targetID = result_ids[k];
+
+    for (int i = 0; i < pokemonData.size(); ++i)
+    {
+      if (pokemonData[i].id == targetID)
+      {
+        cout << right << "[" << setw(3) << k + 1 << "]\t"
+             << left << pokemonData[i].id << "\t"
+             << setw(20) << pokemonData[i].name
+             << "\t" << setw(10) << pokemonData[i].type1
+             << "\t" << setw(6) << pokemonData[i].total
+             << "\t" << pokemonData[i].hp
+             << "\t" << pokemonData[i].attack
+             << "\t" << pokemonData[i].defense
+             << endl;
+        break;
+      }
+    }
+  }
+
+  cout << "Number of visited nodes = " << visited_count << endl << endl;
+  return;
+}
+
+void mission3(vector<Pokemon> &pokemonData, BST &bst, bool &deletedmax)
+{
+  vector<int> deletedID;
+  int deletedHP = -1;
+
+  if (!deletedmax)
+  {
+    bst.DeleteMin(deletedHP, deletedID);
+  }
+  else
+  {
+    bst.DeleteMax(deletedHP, deletedID);
+  }
+  deletedmax = !deletedmax;
+
+  cout << "\n\t#\tName               \tType 1    \tTotal\tHP\tAttack\tDefense\tSp. Atk\tSp. Def" << endl;
+  int cnt = 0;
+  for (int i = 0; i < pokemonData.size(); ++i)
+  {
+    for (int j = 0; j < deletedID.size(); ++j)
+    {
+      if (pokemonData[i].id == deletedID[j])
+      {
+        cnt++;
+        cout << right << "[" << setw(3) << cnt << "]\t"
+             << left << pokemonData[i].id << "\t"
+             << setw(20) << pokemonData[i].name
+             << "\t" << setw(10) << pokemonData[i].type1
+             << "\t" << setw(6) << pokemonData[i].total
+             << "\t" << pokemonData[i].hp
+             << "\t" << pokemonData[i].attack
+             << "\t" << pokemonData[i].defense
+             << "\t" << setw(6) << pokemonData[i].spAtk
+             << "\t" << pokemonData[i].spDef
+             << endl;
+        break;
+      }
+    }
+  }
+
+  // 刪除pokemonData中的資料
+  for (vector<Pokemon>::iterator it = pokemonData.begin(); it != pokemonData.end();)
+  {
+    if (it->hp == deletedHP)
+    {
+      it = pokemonData.erase(it);
+    }
+    else
+    {
+      ++it;
+    }
+  }
+
+  cout << "HP tree height = " << bst.GetHeight() << endl
+       << endl;
+  return;
+}
+
+
+int main()
+{
+
+  vector<Pokemon> pokemonData;
+  BST bst;
+  string filenumber;
+  bool deletedmax = false;
+
+  while (1)
+  {
+    // UI
+    cout << "*** (^_^) Data Structure (^o^) ***" << endl;
+    cout << "** Binary Search Tree on Pokemon *" << endl;
+    cout << "* 0. QUIT                        *" << endl;
+    cout << "* 1. Read a file to build HP BST *" << endl;
+    cout << "* 2. Range search on HP field    *" << endl;
+    cout << "* 3. Delete the min on HP field  *" << endl;
+    cout << "* 4. Rebuild the balanced HP BST *" << endl;
+    cout << "**********************************" << endl;
+
+    string command;
+    cout << "Input a choice(0, 1, 2, 3, 4): ";
+    cin >> command;
+
+    if (command == "1")
+    {
+
+      pokemonData.clear();
+      deletedmax = false;
+      bst = BST();
+      ifstream fin;
+
+      cout << endl;
+      do
+      {
+        cout << "Input a file number [0: quit]: ";
+        cin >> filenumber;
+
+        string filename = "input" + filenumber + ".txt";
+        fin.open(filename);
+        if (!fin.is_open())
+        {
+          cout << "\n### " << filename << " does not exist! ###\n";
+          cout << endl;
+          continue;
+        }
+      } while (!fin.is_open());
+
+      string line;
+      getline(fin, line); // 跳過標籤行
+
+      ReadPokemonData(fin, pokemonData);
+      fin.close();
+
+      mission1(pokemonData, bst);
+    }
+    else if (command == "2")
+    {
+
+      cout << endl;
+      if (pokemonData.size() == 0)
+      {
+        cout << "----- Execute Mission 1 first! -----\n"
+             << endl;
+        continue;
+      }
+
+      mission2(pokemonData, bst);
+    }
+    else if (command == "3")
+    {
+
+      if (pokemonData.size() == 0)
+      {
+        cout << "\n----- Execute Mission 1 first! -----\n"
+             << endl;
+        continue;
+      }
+
+      mission3(pokemonData, bst, deletedmax);
+    }
+    else if (command == "4")
+    {
+      deletedmax = false;
+
+      if (pokemonData.size() == 0)
+      {
+        cout << "\n----- Execute Mission 1 first! -----\n" << endl;
+        continue;
+      }
+
+      int level = 0;
+      bst.RebuildBalanced();
+
+      bst.PrintLevelOrder();
+      cout << endl;
+    }
+    else if (command == "0")
+    {
+      break;
+    }
+    else
+    {
+      cout << "\nCommand does not exist!" << endl;
+      cout << endl;
+    }
+  }
+
+  return 0;
+}
